@@ -85,8 +85,8 @@ th{
 
 let currentRow = null;
 let timer = null;
-let lastPeriode = null;
-let sudahIsiHasil = false;
+let lastPeriode = null;   // periode berjalan (angka, mis. 51792)
+let lastSisa = null;
 
 function kategori(num){
   return num <= 4 ? "Kecil" : "Besar";
@@ -108,73 +108,30 @@ async function ambilAPI(){
 
 function tambahBaris(periode){
   const tbody = document.getElementById("dataBody");
+  const p = String(periode);
+  if(tbody.firstChild && tbody.firstChild.dataset.periode === p) return; // cegah duplikat
   const tr = document.createElement("tr");
-  const pred = buatPrediksi();
-
+  tr.dataset.periode = p;
+  tr.dataset.done = "0";
   tr.innerHTML = `
-    <td>${periode}</td>
-    <td>${pred}</td>
+    <td>${p}</td>
+    <td>${buatPrediksi()}</td>
     <td class="count">-</td>
     <td class="hasil">-</td>
     <td class="status">-</td>
   `;
-
   tbody.insertBefore(tr, tbody.firstChild);
+  while(tbody.children.length > 30) tbody.removeChild(tbody.lastChild);
   currentRow = tr;
-  sudahIsiHasil = false;
 }
 
-function mulaiCountdown(){
-  clearInterval(timer);
-
-  timer = setInterval(() => {
-
-    const now = new Date();
-    const sec = now.getSeconds();
-
-    // countdown sinkron 30 detik
-    let sisa = 30 - (sec % 30);
-    if(sisa === 30) sisa = 0;
-
-    if(currentRow){
-      currentRow.querySelector(".count").innerText = sisa;
-    }
-
-    // cek data tiap 4 detik
-    if(sec % 4 === 0){
-      cekData();
-    }
-
-  },1000);
-}
-
-async function cekData(){
-  const data = await ambilAPI();
-  if(!data) return;
-
-  // PERIODE BARU
-  if(data.periode !== lastPeriode){
-    lastPeriode = data.periode;
-    tambahBaris(data.periode);
-    return;
-  }
-
-  // PERIODE SAMA → isi hasil kalau belum
-  if(!sudahIsiHasil){
-    isiHasil(data.hasil);
-    sudahIsiHasil = true;
-  }
-}
-
-function isiHasil(hasil){
+function isiHasil(tr, hasil){
+  if(!tr || tr.dataset.done === "1") return;
+  tr.dataset.done = "1";
   const kategoriHasil = kategori(hasil);
-
-  const hasilCell = currentRow.querySelector(".hasil");
-  const statusCell = currentRow.querySelector(".status");
-  const prediksi = currentRow.children[1].innerText;
-
-  hasilCell.innerText = kategoriHasil + " " + hasil;
-
+  tr.querySelector(".hasil").innerText = kategoriHasil + " " + hasil;
+  const statusCell = tr.querySelector(".status");
+  const prediksi = tr.children[1].innerText;
   if(prediksi === kategoriHasil){
     statusCell.innerText = "WIN";
     statusCell.className = "status win";
@@ -184,12 +141,63 @@ function isiHasil(hasil){
   }
 }
 
+// cocokkan hasil dari API ke baris yang periodenya sesuai
+function cocokkanHasil(list){
+  if(!Array.isArray(list)) return;
+  document.querySelectorAll("#dataBody tr").forEach(tr => {
+    if(tr.dataset.done === "1") return;
+    const found = list.find(e => String(e.issueNumber).slice(-5) === tr.dataset.periode);
+    if(found) isiHasil(tr, parseInt(found.number, 10));
+  });
+}
+
+async function cekData(){
+  const data = await ambilAPI();
+  if(!data || data.error) return;
+  cocokkanHasil(data.list);
+  // sinkronisasi periode dari API (koreksi kalau hitungan lokal meleset)
+  const apiP = parseInt(data.periode, 10);
+  if(!isNaN(apiP) && (lastPeriode === null || apiP > lastPeriode)){
+    lastPeriode = apiP;
+    tambahBaris(apiP);
+  }
+}
+
+function mulaiCountdown(){
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const now = new Date();
+    const sec = now.getSeconds();
+
+    // countdown sinkron 30 detik
+    let sisa = 30 - (sec % 30);
+    if(sisa === 30) sisa = 0;
+
+    // PERBAIKAN UTAMA: begitu periode baru dimulai (countdown wrap),
+    // langsung buat baris prediksi — tidak menunggu API yang lambat
+    if(lastSisa !== null && sisa > lastSisa && lastPeriode !== null){
+      lastPeriode++;
+      tambahBaris(lastPeriode);
+    }
+    lastSisa = sisa;
+
+    if(currentRow){
+      currentRow.querySelector(".count").innerText = sisa;
+    }
+
+    // cek hasil tiap 2 detik (dulu 4 detik)
+    if(sec % 2 === 0){
+      cekData();
+    }
+  },1000);
+}
+
 async function start(){
   const data = await ambilAPI();
-  if(!data) return;
-
-  lastPeriode = data.periode;
-  tambahBaris(data.periode);
+  if(!data || data.error) return;
+  lastPeriode = parseInt(data.periode, 10);
+  tambahBaris(lastPeriode);
+  cocokkanHasil(data.list);
   mulaiCountdown();
 }
 
