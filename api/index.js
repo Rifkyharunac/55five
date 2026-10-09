@@ -19,7 +19,7 @@ export default async function handler(req, res) {
           language: 0,
           random: "166b81d9568e4123a83a2c7fdb80b7d9",
           signature: "5DB43C344C7381B72B5262FFB3572444",
-          timestamp: Math.floor(Date.now() / 1000)
+          timestamp: 1737252405
         })
       }
     );
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
           language: 0,
           random: "b631eb26bac6403e99093913e5bb48c5",
           signature: "A6203E85132E5FE26B5F43DDF1ECDD07",
-          timestamp: Math.floor(Date.now() / 1000)
+          timestamp: 1737252405
         })
       }
     );
@@ -74,7 +74,13 @@ export default async function handler(req, res) {
       periode,
       issue: fullIssue,
       hasil: parseInt(lastDigit),
-      number: numberString
+      number: numberString,
+      // daftar hasil lengkap biar frontend bisa mencocokkan hasil ke periode yg tepat
+      list: list.slice(0, 20).map(e => ({
+        issueNumber: e.issueNumber,
+        number: e.number,
+        colour: e.colour || ''
+      }))
     });
 
   } catch (err) {
