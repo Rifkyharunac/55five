@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WEB 55 PANEL</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+.panel{
+  height:25vh;
+  background:#1c1c1c;
+  overflow:auto;
+  padding:10px;
+}
+
+.web55{
+  height:75vh;
+}
+
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+}
+
+th,td{
+  border:1px solid #333;
+  padding:6px;
+  text-align:center;
+}
+
+th{
+  background:#222;
+}
+
+.win{
+  color:#00ff00;
+  font-weight:bold;
+}
+
+.lose{
+  color:#ff0000;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Periode</th>
+        <th>Prediksi</th>
+        <th>Count</th>
+        <th>Hasil</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="dataBody"></tbody>
+  </table>
+</div>
+
+<div class="web55">
+  <iframe src="https://55x4mqd.com/#/home/"></iframe>
+</div>
+
+<script>
+
+let currentRow = null;
+let timer = null;
+let lastPeriode = null;
+let sudahIsiHasil = false;
+
+function kategori(num){
+  return num <= 4 ? "Kecil" : "Besar";
+}
+
+function buatPrediksi(){
+  return Math.random() > 0.5 ? "Besar" : "Kecil";
+}
+
+async function ambilAPI(){
+  try{
+    const res = await fetch("/api?t=" + Date.now());
+    return await res.json();
+  }catch(e){
+    console.log("API ERROR:", e);
+    return null;
+  }
+}
+
+function tambahBaris(periode){
+  const tbody = document.getElementById("dataBody");
+  const tr = document.createElement("tr");
+  const pred = buatPrediksi();
+
+  tr.innerHTML = `
+    <td>${periode}</td>
+    <td>${pred}</td>
+    <td class="count">-</td>
+    <td class="hasil">-</td>
+    <td class="status">-</td>
+  `;
+
+  tbody.insertBefore(tr, tbody.firstChild);
+  currentRow = tr;
+  sudahIsiHasil = false;
+}
+
+function mulaiCountdown(){
+  clearInterval(timer);
+
+  timer = setInterval(() => {
+
+    const now = new Date();
+    const sec = now.getSeconds();
+
+    // countdown sinkron 30 detik
+    let sisa = 30 - (sec % 30);
+    if(sisa === 30) sisa = 0;
+
+    if(currentRow){
+      currentRow.querySelector(".count").innerText = sisa;
+    }
+
+    // cek data tiap 4 detik
+    if(sec % 4 === 0){
+      cekData();
+    }
+
+  },1000);
+}
+
+async function cekData(){
+  const data = await ambilAPI();
+  if(!data) return;
+
+  // PERIODE BARU
+  if(data.periode !== lastPeriode){
+    lastPeriode = data.periode;
+    tambahBaris(data.periode);
+    return;
+  }
+
+  // PERIODE SAMA → isi hasil kalau belum
+  if(!sudahIsiHasil){
+    isiHasil(data.hasil);
+    sudahIsiHasil = true;
+  }
+}
+
+function isiHasil(hasil){
+  const kategoriHasil = kategori(hasil);
+
+  const hasilCell = currentRow.querySelector(".hasil");
+  const statusCell = currentRow.querySelector(".status");
+  const prediksi = currentRow.children[1].innerText;
+
+  hasilCell.innerText = kategoriHasil + " " + hasil;
+
+  if(prediksi === kategoriHasil){
+    statusCell.innerText = "WIN";
+    statusCell.className = "status win";
+  }else{
+    statusCell.innerText = "LOSE";
+    statusCell.className = "status lose";
+  }
+}
+
+async function start(){
+  const data = await ambilAPI();
+  if(!data) return;
+
+  lastPeriode = data.periode;
+  tambahBaris(data.periode);
+  mulaiCountdown();
+}
+
+start();
+
+</script>
+
+</body>
+</html>
