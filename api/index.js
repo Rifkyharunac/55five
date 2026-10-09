@@ -76,9 +76,11 @@ export default async function handler(req, res) {
       hasil: parseInt(lastDigit),
       number: numberString,
       // daftar hasil lengkap biar frontend bisa mencocokkan hasil ke periode yg tepat
+      // setiap item sudah include 'hasil' (digit terakhir) agar frontend tidak perlu re-parse
       list: list.slice(0, 20).map(e => ({
         issueNumber: e.issueNumber,
         number: e.number,
+        hasil: parseInt(String(e.number).split(",").pop(), 10),
         colour: e.colour || ''
       }))
     });
