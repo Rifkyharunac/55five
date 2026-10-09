@@ -147,7 +147,8 @@ function cocokkanHasil(list){
   document.querySelectorAll("#dataBody tr").forEach(tr => {
     if(tr.dataset.done === "1") return;
     const found = list.find(e => String(e.issueNumber).slice(-5) === tr.dataset.periode);
-    if(found) isiHasil(tr, parseInt(found.number, 10));
+    // gunakan found.hasil (sudah di-parse oleh API, digit terakhir yang benar)
+    if(found) isiHasil(tr, found.hasil);
   });
 }
 
@@ -155,9 +156,10 @@ async function cekData(){
   const data = await ambilAPI();
   if(!data || data.error) return;
   cocokkanHasil(data.list);
-  // sinkronisasi periode dari API (koreksi kalau hitungan lokal meleset)
+  // sinkronisasi periode dari API: hanya update bila API melaporkan periode LEBIH BARU
+  // (bukan sama dengan lastPeriode yang sudah di-increment lokal)
   const apiP = parseInt(data.periode, 10);
-  if(!isNaN(apiP) && (lastPeriode === null || apiP > lastPeriode)){
+  if(!isNaN(apiP) && lastPeriode !== null && apiP > lastPeriode){
     lastPeriode = apiP;
     tambahBaris(apiP);
   }
@@ -169,23 +171,24 @@ function mulaiCountdown(){
     const now = new Date();
     const sec = now.getSeconds();
 
-    // countdown sinkron 30 detik
-    let sisa = 30 - (sec % 30);
-    if(sisa === 30) sisa = 0;
+    // countdown sinkron 30 detik: sisa waktu sampai periode berikutnya
+    // sec=0  → sisa=30, sec=1 → sisa=29, ..., sec=29 → sisa=1
+    const sisa = 30 - (sec % 30);
 
-    // PERBAIKAN UTAMA: begitu periode baru dimulai (countdown wrap),
-    // langsung buat baris prediksi — tidak menunggu API yang lambat
-    if(lastSisa !== null && sisa > lastSisa && lastPeriode !== null){
+    // Deteksi pergantian periode: ketika lastSisa kecil (≤3) lalu tiba-tiba jadi 30
+    // Ini berarti countdown habis dan periode baru dimulai
+    if(lastSisa !== null && lastSisa <= 3 && sisa === 30 && lastPeriode !== null){
       lastPeriode++;
       tambahBaris(lastPeriode);
     }
     lastSisa = sisa;
 
     if(currentRow){
+      // tampilkan countdown; saat sisa=30 artinya baru mulai (30 detik penuh)
       currentRow.querySelector(".count").innerText = sisa;
     }
 
-    // cek hasil tiap 2 detik (dulu 4 detik)
+    // cek hasil tiap 2 detik
     if(sec % 2 === 0){
       cekData();
     }
