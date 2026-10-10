@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="id">
+<head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WEB 55 PANEL</title>
 
@@ -10,20 +10,20 @@ body{
   background:#111;
   color:white;
   font-family:Arial;
-  height:100vh;
+  height:100dvh; overflow:hidden;
   display:flex;
   flex-direction:column;
 }
 
 .panel{
-  height:25vh;
+  flex: 0 0 45vh; box-sizing:border-box;
   background:#1c1c1c;
   overflow:auto;
   padding:10px;
 }
 
 .web55{
-  height:75vh;
+  flex:1; min-height:0; display:flex;
 }
 
 iframe{
@@ -35,12 +35,12 @@ iframe{
 table{
   width:100%;
   border-collapse:collapse;
-  font-size:14px;
+  font-size:12px;
 }
 
 th,td{
   border:1px solid #333;
-  padding:6px;
+  padding:5px;
   text-align:center;
 }
 
@@ -57,18 +57,18 @@ th{
   color:#ff0000;
   font-weight:bold;
 }
-</style>
+p{font-size:13px;line-height:1.4;margin:8px 0;} td{white-space:nowrap;} button{padding:6px 10px;cursor:pointer;} </style>
 </head>
 
 <body>
 
-<div class="panel">
+<div class="panel"><p id="connection" role="status">Menghubungkan ke server...</p><button id="retry" type="button">Coba lagi</button><p>Prediksi eksperimen dari frekuensi maksimal 100 hasil sebelumnya. Minimal 10 hasil; data seimbang atau kurang akan dilewati. Tidak menjamin hasil berikutnya.</p><p id="accuracy"></p><p id="storage"></p>
   <table>
     <thead>
       <tr>
         <th>Periode</th>
         <th>Prediksi</th>
-        <th>Count</th>
+        <th>Data acuan</th><th>Sisa waktu</th>
         <th>Hasil</th>
         <th>Status</th>
       </tr>
@@ -78,135 +78,10 @@ th{
 </div>
 
 <div class="web55">
-  <iframe src="https://55x4mqd.com/#/home/"></iframe>
+  <iframe title="Situs 55five" src="https://55x4mqd.com/#/home/"></iframe>
 </div>
 
-<script>
-
-let currentRow = null;
-let timer = null;
-let lastPeriode = null;   // periode berjalan (angka, mis. 51792)
-let lastSisa = null;
-
-function kategori(num){
-  return num <= 4 ? "Kecil" : "Besar";
-}
-
-function buatPrediksi(){
-  return Math.random() > 0.5 ? "Besar" : "Kecil";
-}
-
-async function ambilAPI(){
-  try{
-    const res = await fetch("/api?t=" + Date.now());
-    return await res.json();
-  }catch(e){
-    console.log("API ERROR:", e);
-    return null;
-  }
-}
-
-function tambahBaris(periode){
-  const tbody = document.getElementById("dataBody");
-  const p = String(periode);
-  if(tbody.firstChild && tbody.firstChild.dataset.periode === p) return; // cegah duplikat
-  const tr = document.createElement("tr");
-  tr.dataset.periode = p;
-  tr.dataset.done = "0";
-  tr.innerHTML = `
-    <td>${p}</td>
-    <td>${buatPrediksi()}</td>
-    <td class="count">-</td>
-    <td class="hasil">-</td>
-    <td class="status">-</td>
-  `;
-  tbody.insertBefore(tr, tbody.firstChild);
-  while(tbody.children.length > 30) tbody.removeChild(tbody.lastChild);
-  currentRow = tr;
-}
-
-function isiHasil(tr, hasil){
-  if(!tr || tr.dataset.done === "1") return;
-  tr.dataset.done = "1";
-  const kategoriHasil = kategori(hasil);
-  tr.querySelector(".hasil").innerText = kategoriHasil + " " + hasil;
-  const statusCell = tr.querySelector(".status");
-  const prediksi = tr.children[1].innerText;
-  if(prediksi === kategoriHasil){
-    statusCell.innerText = "WIN";
-    statusCell.className = "status win";
-  }else{
-    statusCell.innerText = "LOSE";
-    statusCell.className = "status lose";
-  }
-}
-
-// cocokkan hasil dari API ke baris yang periodenya sesuai
-function cocokkanHasil(list){
-  if(!Array.isArray(list)) return;
-  document.querySelectorAll("#dataBody tr").forEach(tr => {
-    if(tr.dataset.done === "1") return;
-    const found = list.find(e => String(e.issueNumber).slice(-5) === tr.dataset.periode);
-    // gunakan found.hasil (sudah di-parse oleh API, digit terakhir yang benar)
-    if(found) isiHasil(tr, found.hasil);
-  });
-}
-
-async function cekData(){
-  const data = await ambilAPI();
-  if(!data || data.error) return;
-  cocokkanHasil(data.list);
-  // sinkronisasi periode dari API: hanya update bila API melaporkan periode LEBIH BARU
-  // (bukan sama dengan lastPeriode yang sudah di-increment lokal)
-  const apiP = parseInt(data.periode, 10);
-  if(!isNaN(apiP) && lastPeriode !== null && apiP > lastPeriode){
-    lastPeriode = apiP;
-    tambahBaris(apiP);
-  }
-}
-
-function mulaiCountdown(){
-  clearInterval(timer);
-  timer = setInterval(() => {
-    const now = new Date();
-    const sec = now.getSeconds();
-
-    // countdown sinkron 30 detik: sisa waktu sampai periode berikutnya
-    // sec=0  → sisa=30, sec=1 → sisa=29, ..., sec=29 → sisa=1
-    const sisa = 30 - (sec % 30);
-
-    // Deteksi pergantian periode: ketika lastSisa kecil (≤3) lalu tiba-tiba jadi 30
-    // Ini berarti countdown habis dan periode baru dimulai
-    if(lastSisa !== null && lastSisa <= 3 && sisa === 30 && lastPeriode !== null){
-      lastPeriode++;
-      tambahBaris(lastPeriode);
-    }
-    lastSisa = sisa;
-
-    if(currentRow){
-      // tampilkan countdown; saat sisa=30 artinya baru mulai (30 detik penuh)
-      currentRow.querySelector(".count").innerText = sisa;
-    }
-
-    // cek hasil tiap 2 detik
-    if(sec % 2 === 0){
-      cekData();
-    }
-  },1000);
-}
-
-async function start(){
-  const data = await ambilAPI();
-  if(!data || data.error) return;
-  lastPeriode = parseInt(data.periode, 10);
-  tambahBaris(lastPeriode);
-  cocokkanHasil(data.list);
-  mulaiCountdown();
-}
-
-start();
-
-</script>
+<script type="module" src="/app.mjs"></script>
 
 </body>
 </html>
