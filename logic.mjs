@@ -1,0 +1,86 @@
+export function issueId(value) {
+  return typeof value === 'string' && /^\d{10,30}$/.test(value) ? value : null;
+}
+export function compareIssue(a, b) {
+  return a.length - b.length || a.localeCompare(b);
+}
+export function digit(value) {
+  if (typeof value === 'number') return Number.isInteger(value) && value >= 0 && value <= 9 ? value : null;
+  if (typeof value !== 'string' || !/^\s*\d\s*$/.test(value)) return null;
+  return Number(value.trim());
+}
+export function category(value) {
+  const n = digit(value);
+  return n === null ? null : n <= 4 ? 'Kecil' : 'Besar';
+}
+export function normalizeResults(list) {
+  if (!Array.isArray(list)) throw new Error('Daftar hasil tidak valid');
+  const results = new Map();
+  const conflicts = new Set();
+  for (const item of list) {
+    const issue = issueId(item?.issueNumber);
+    const number = digit(item?.number);
+    if (!issue || number === null || conflicts.has(issue)) continue;
+    if (results.has(issue) && results.get(issue).number !== number) {
+      results.delete(issue);
+      conflicts.add(issue);
+    } else results.set(issue, { issueNumber: issue, number });
+  }
+  return [...results.values()].sort((a, b) => compareIssue(a.issueNumber, b.issueNumber));
+}
+export function predict(history, issue) {
+  const sample = normalizeResults(history).filter(r => compareIssue(r.issueNumber, issue) < 0).slice(-100);
+  const big = sample.filter(r => r.number >= 5).length;
+  // Smoothed historical frequency, not a calibrated probability of winning.
+  const bigRate = (big + 1) / (sample.length + 2);
+  return { label: sample.length < 10 || big * 2 === sample.length ? null : bigRate > .5 ? 'Besar' : 'Kecil',
+    samples: sample.length, bigRate };
+}
+export function applySnapshot(state, data) {
+  const issue = issueId(data?.issue);
+  if (!issue || !Array.isArray(data.list)) throw new Error('Data periode tidak valid');
+  if (state.issue && compareIssue(issue, state.issue) < 0) throw new Error('Server mengirim periode lama');
+  const results = normalizeResults(data.list);
+  const history = normalizeResults([...state.history, ...results]).slice(-200);
+  const rows = state.rows.map(row => {
+    if (row.result !== null) return row;
+    const found = results.find(r => r.issueNumber === row.issue);
+    return found ? { ...row, result: found.number } : row;
+  });
+  // Never create a prediction retrospectively after its result is already known.
+  if (!rows.some(r => r.issue === issue) && !history.some(r => compareIssue(r.issueNumber, issue) >= 0)) {
+    rows.unshift({ issue, prediction: predict(history, issue), result: null });
+  }
+  return { issue, history, rows: rows.slice(0, 200) };
+}
+export function accuracy(rows) {
+  const scored = rows.filter(r => r.result !== null && r.prediction.label !== null);
+  return { total: scored.length, wins: scored.filter(r => category(r.result) === r.prediction.label).length };
+}
+export function restore(value) {
+  const empty = { issue: null, history: [], rows: [] };
+  try {
+    const state = JSON.parse(value);
+    if (state?.version !== 1 || !Array.isArray(state.rows)) return empty;
+    const seen = new Set();
+    const rows = state.rows.filter(r => {
+      if (!issueId(r?.issue) || seen.has(r.issue) || ![null, 'Besar', 'Kecil'].includes(r.prediction?.label) ||
+          !Number.isInteger(r.prediction?.samples) || r.prediction.samples < 0 || r.prediction.samples > 100 ||
+          !Number.isFinite(r.prediction.bigRate) || r.prediction.bigRate < 0 || r.prediction.bigRate > 1 ||
+          (r.result !== null && digit(r.result) === null)) return false;
+      seen.add(r.issue);
+      return true;
+    }).map(r => ({ issue: r.issue, prediction: r.prediction, result: r.result === null ? null : digit(r.result) }))
+      .sort((a,b) => compareIssue(b.issue,a.issue)).slice(0,200);
+    return { issue: rows[0]?.issue ?? null, rows, history: normalizeResults(state.history).slice(-200) };
+  } catch { return empty; }
+}
+export function serverRemaining(data) {
+  // Both timestamps share the upstream clock; subtract without guessing its timezone.
+  const parse = value => {
+    if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(value)) return NaN;
+    return Date.parse(value.replace(' ', 'T') + 'Z');
+  };
+  const remaining = parse(data?.endTime) - parse(data?.serviceTime);
+  return Number.isFinite(remaining) && remaining >= 0 && remaining <= 30000 ? remaining : null;
+}
