@@ -1,4 +1,5 @@
 import { applySnapshot, restore, accuracy, category } from './logic.mjs';
+const reasons = { insufficient: 'Data belum cukup: perlu 100 hasil pelatihan dan 100 hasil uji berdasarkan urutan waktu.', gap: 'Hasil periode tepat sebelumnya belum tersedia.', context: 'Contoh transisi sejenis belum cukup.', baseline: 'Model belum mengungguli pembanding sederhana.', unstable: 'Kinerja 50 hasil uji terakhir melemah.', weak: 'Sinyal model terlalu dekat dengan seimbang.', eligible: 'Lolos filter eksperimen; bukan jaminan hasil berikutnya.' };
 const storageKey = '55five-predictions-v1';
 let storageOK = true;
 let state;
@@ -20,22 +21,33 @@ function render() {
     const tr = document.createElement('tr');
     const status = row.result === null ? 'Menunggu hasil' : row.prediction.label === null ? 'Dilewati' :
       category(row.result) === row.prediction.label ? 'WIN' : 'LOSE';
-    const cells = [row.issue.slice(-5), row.prediction.label ?? 'Lewati',
+    const cells = [row.issue.slice(-5), (row.prediction.label ?? 'Lewati') + (row.prediction.modelVersion === 2 ? '' : ' (lama)'),
       `${row.prediction.samples} hasil`, '-', row.result === null ? '-' : `${category(row.result)} ${row.result}`, status];
     for (const text of cells) { const td = document.createElement('td'); td.textContent = text; tr.append(td); }
     tr.children[0].title = row.issue; tr.children[0].setAttribute("aria-label", row.issue);
-    tr.children[1].title = `Frekuensi Besar dengan perataan: ${(row.prediction.bigRate * 100).toFixed(1)}%. Bukan peluang menang teruji.`;
+    tr.children[1].title = reasons[row.prediction.reason] ?? 'Prediksi metode lama; keputusan asli dipertahankan.';
     if (row.issue === state.issue && row.result === null) tr.children[3].id = 'countdown';
     else tr.children[3].textContent = row.result === null ? 'Menunggu hasil' : 'Selesai';
     tr.children[5].className = status === 'WIN' ? 'win' : status === 'LOSE' ? 'lose' : '';
     tbody.append(tr);
   }
-  const stats = accuracy(state.rows);
-  document.getElementById('accuracy').textContent = stats.total ?
-    `Akurasi tercatat: ${stats.wins}/${stats.total} (${(100 * stats.wins / stats.total).toFixed(1)}%).` :
-    'Akurasi belum tersedia: menunggu prediksi yang sudah memiliki hasil.';
+  const currentRows = state.rows.filter(r => r.prediction.modelVersion === 2);
+  const stats = accuracy(currentRows);
+  const skipped = currentRows.filter(r => r.prediction.label === null).length;
+  const legacy = state.rows.length-currentRows.length;
+  document.getElementById('accuracy').textContent = (stats.total ?
+    `Akurasi sinyal versi baru: ${stats.wins}/${stats.total} (${(100 * stats.wins / stats.total).toFixed(1)}%). ` :
+    'Akurasi sinyal versi baru belum tersedia. ') + `Dilewati: ${skipped}/${currentRows.length} periode. Riwayat lama: ${legacy} periode (terpisah).`;
+  const latest = state.rows.find(r=>r.issue===state.issue)?.prediction;
+  document.getElementById('decision').textContent = latest?.modelVersion === 2 ? reasons[latest.reason] :
+    'Metode baru mulai pada periode berikutnya; prediksi yang sudah tercatat tetap dipertahankan.';
+  const e = latest?.modelVersion === 2 ? latest.evaluation : null;
+  document.getElementById('validation').textContent = e ?
+    `Uji historis kandidat: ${e.tested} hasil uji; minimum 100, maksimal 200 hasil terbaru. ` + (e.tested ?
+      `Benar ${e.wins}/${e.tested}; pembanding frekuensi ${e.baselineWins}/${e.tested}. Brier model ${e.brier.toFixed(3)}, frekuensi ${e.baselineBrier.toFixed(3)}, netral 0.250; lebih kecil lebih baik. Ini bukan akurasi sinyal live atau probabilitas menang yang terkalibrasi.` :
+      'Menunggu data. Pelatihan menggunakan 100 hasil sebelum setiap target uji.') : 'Evaluasi metode baru belum tersedia.';
   document.getElementById('storage').textContent = storageOK ?
-    'Tersimpan di browser ini; statistik dari maksimal 200 periode, tabel menampilkan 30 terbaru.' :
+    'Tersimpan di browser ini: hingga 1.000 hasil untuk analisis, 200 keputusan, dan 30 baris terbaru.' :
     'Penyimpanan browser tidak tersedia. Riwayat hanya bertahan selama halaman terbuka.';
   tick();
 }
