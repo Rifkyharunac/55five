@@ -1,3 +1,7 @@
+# Pembaruan metode versi 2
+
+Metode frekuensi versi 1 di bawah sudah diganti oleh filter evaluasi berurutan. Lihat [RESEARCH.md](RESEARCH.md) untuk model, referensi, batas data, dan hasil validasi terbaru. Bagian berikut dipertahankan sebagai catatan versi sebelumnya.
+
 # Perbaikan panel prediksi 55five
 
 Panel memakai ID periode lengkap dari server. Nomor periode tidak pernah ditambah berdasarkan jam perangkat. Hasil hanya menyelesaikan baris dengan ID identik dan angka 0–9 yang valid.

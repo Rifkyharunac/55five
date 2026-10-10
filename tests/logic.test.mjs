@@ -13,7 +13,7 @@ test('history rejects malformed results and conflicting duplicates', () => {
   assert.deepEqual(normalizeResults([{issueNumber:id(1),number:2},{issueNumber:id(1),number:8}, {issueNumber:id(2),number:'8x'}]), []);
 });
 test('predictions use only earlier history and skip insufficient/tied data', () => {
-  assert.equal(predict(history,id(12)).label,'Besar');
+  assert.equal(predict(history,id(12)).label,null);
   assert.equal(predict(history,id(3)).label,null);
   assert.equal(predict([...history,{issueNumber:id(20),number:0}],id(12)).samples,12);
   assert.equal(predict(history.map((r,i)=>({...r,number:i%2?1:8})),id(12)).label,null);
@@ -31,7 +31,7 @@ test('delayed results settle exact issues including after a day change', () => {
   state = applySnapshot(state,{issue:'20261011100050001',list:[{issueNumber:id(12),number:8}]});
   assert.equal(state.rows[1].result,8);
   assert.equal(state.rows[0].result,null);
-  assert.deepEqual(accuracy(state.rows),{total:1,wins:1});
+  assert.deepEqual(accuracy(state.rows),{total:0,wins:0});
   assert.throws(()=>applySnapshot(state,snap(13)));
 });
 test('no retrospective predictions and no invalid settlement', () => {

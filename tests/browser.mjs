@@ -17,7 +17,7 @@ const server = createServer(async(req,res)=>{
     res.writeHead(fail?502:200,{'Content-Type':'application/json','Cache-Control':'no-store'});
     res.end(JSON.stringify(fail?{error:'offline'}:fixture));active--;return;
   }
-  const paths={'/':'index.html','/app.mjs':'app.mjs','/logic.mjs':'logic.mjs'};
+  const paths={'/':'index.html','/app.mjs':'app.mjs','/logic.mjs':'logic.mjs','/model.mjs':'model.mjs'};
   if(!paths[req.url]) {res.writeHead(204);res.end();return;}
   res.setHeader('Content-Type',req.url==='/'?'text/html':'text/javascript');
   res.end(await readFile(new URL('../'+paths[req.url],import.meta.url)));
@@ -35,7 +35,7 @@ try {
   await page.locator('#dataBody tr').waitFor({timeout:10000});
   assert.equal(await page.locator('#dataBody tr').count(),1);
   assert.match(await page.locator('#countdown').innerText(),/dtk/);
-  assert.match(await page.locator('#dataBody tr').innerText(),/Besar/);
+  assert.match(await page.locator('#dataBody tr').innerText(),/Lewati/);
   assert.match(await page.locator('#dataBody tr').innerText(),/Menunggu hasil/);
   console.log('PASS initial failure retries automatically, server clock unaffected by device clock');
   await page.reload();
@@ -44,10 +44,10 @@ try {
   console.log('PASS reload preserves one frozen prediction');
   fixture={issue:'20261011100050001',remainingMs:25000,list:[{issueNumber:id(12),number:8},...history]};
   await page.getByRole('button',{name:'Coba lagi'}).click();
-  await page.getByText('WIN',{exact:true}).waitFor();
+  await page.getByText('Dilewati',{exact:true}).waitFor();
   assert.equal(await page.locator('#dataBody tr').count(),2);
-  assert.match(await page.locator('#accuracy').innerText(),/1\/1/);
-  console.log('PASS midnight transition settles only matching period and records accuracy');
+  assert.match(await page.locator('#accuracy').innerText(),/Dilewati: 2\/2/);
+  console.log('PASS insufficient data skips and does not inflate accuracy');
   failing=true;
   await page.getByRole('button',{name:'Coba lagi'}).click();
   await page.getByText('Data belum tersinkron.',{exact:false}).waitFor();
@@ -58,6 +58,19 @@ try {
   await page.getByText('Terhubung.',{exact:false}).waitFor();
   assert.equal(maxActive,1);
   console.log('PASS disconnect pauses countdown; repeated retry clicks cannot overlap requests');
+  const sid=n=>String(20261011100050000n+BigInt(n));
+  const synthetic=Array.from({length:350},(_,i)=>({issueNumber:sid(i),number:i%2?8:2}));
+  fixture={issue:sid(350),remainingMs:25000,list:synthetic};
+  await page.getByRole('button',{name:'Coba lagi'}).click();
+  await page.getByText('Lolos filter eksperimen; bukan jaminan hasil berikutnya.',{exact:true}).waitFor();
+  assert.match(await page.locator('#dataBody tr').first().innerText(),/Kecil/);
+  await page.getByText('Evaluasi dan dasar metode',{exact:true}).click();
+  assert.match(await page.locator('#validation').innerText(),/Brier model/);
+  fixture={issue:sid(351),remainingMs:25000,list:[...synthetic,{issueNumber:sid(350),number:2}]};
+  await page.getByRole('button',{name:'Coba lagi'}).click();
+  await page.getByText('WIN',{exact:true}).waitFor();
+  assert.match(await page.locator('#accuracy').innerText(),/1\/1/);
+  console.log('PASS validated synthetic pattern signals; live accuracy is separate from historical evaluation');
   await page.setViewportSize({width:390,height:844});
   await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});
   await page.screenshot({path:new URL('../test-results/mobile.png',import.meta.url).pathname.replace(/^\/(\w:)/,'$1'),fullPage:true});
