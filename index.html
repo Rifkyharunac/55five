@@ -62,12 +62,12 @@ a{color:#9dcfff;} summary{cursor:pointer;font-size:13px;} p{font-size:13px;line-
 
 <body>
 
-<div class="panel"><p id="connection" role="status">Menghubungkan ke server...</p><button id="retry" type="button">Coba lagi</button><p>Mode eksperimen: pola transisi diuji pada hasil yang belum dipakai melatihnya. Sinyal dilewati jika data kurang atau model belum mengungguli pembanding. Tidak menjamin kemenangan.</p><p id="decision"></p><p id="accuracy"></p><details><summary>Evaluasi dan dasar metode</summary><p id="validation"></p><p>Metode pengujian: <a href="https://otexts.com/fpp3/tscv.html">evaluasi berurutan</a> dan <a href="https://scikit-learn.org/stable/modules/calibration.html">Brier score</a>. Batas filter merupakan kebijakan eksperimen aplikasi, bukan bukti keunggulan statistik.</p></details><p id="storage"></p>
+<div class="panel"><p id="connection" role="status">Menghubungkan ke server...</p><button id="retry" type="button">Coba lagi</button><p id="decision"></p><p id="progress"></p><p id="experiment"></p><details><summary>Evaluasi dan dasar metode</summary><p>Estimasi sementara ditampilkan mulai 10 hasil dan dicatat untuk diuji. Kolom sinyal menunjukkan apakah filter evaluasi sudah lolos. Estimasi belum teruji dan tidak menjamin kemenangan.</p><p id="accuracy"></p><p id="storage"></p><p id="validation"></p><p id="uncertainty"></p><p>Metode pengujian: <a href="https://otexts.com/fpp3/tscv.html">evaluasi berurutan</a> dan <a href="https://scikit-learn.org/stable/modules/calibration.html">Brier score</a>. Batas filter merupakan kebijakan eksperimen aplikasi, bukan bukti keunggulan statistik.</p></details>
   <table>
     <thead>
       <tr>
         <th>Periode</th>
-        <th>Prediksi</th>
+        <th>Estimasi sementara</th><th>Sinyal</th>
         <th>Data acuan</th><th>Sisa waktu</th>
         <th>Hasil</th>
         <th>Status</th>

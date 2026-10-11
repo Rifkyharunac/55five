@@ -35,7 +35,7 @@ try {
   await page.locator('#dataBody tr').waitFor({timeout:10000});
   assert.equal(await page.locator('#dataBody tr').count(),1);
   assert.match(await page.locator('#countdown').innerText(),/dtk/);
-  assert.match(await page.locator('#dataBody tr').innerText(),/Lewati/);
+  assert.match(await page.locator('#dataBody tr').innerText(),/Besar \(eksperimen\)/);
   assert.match(await page.locator('#dataBody tr').innerText(),/Menunggu hasil/);
   console.log('PASS initial failure retries automatically, server clock unaffected by device clock');
   await page.reload();
@@ -44,10 +44,11 @@ try {
   console.log('PASS reload preserves one frozen prediction');
   fixture={issue:'20261011100050001',remainingMs:25000,list:[{issueNumber:id(12),number:8},...history]};
   await page.getByRole('button',{name:'Coba lagi'}).click();
-  await page.getByText('Dilewati',{exact:true}).waitFor();
+  await page.getByText('Cocok (estimasi)',{exact:true}).waitFor();
   assert.equal(await page.locator('#dataBody tr').count(),2);
-  assert.match(await page.locator('#accuracy').innerText(),/Dilewati: 2\/2/);
-  console.log('PASS insufficient data skips and does not inflate accuracy');
+  assert.match(await page.locator('#accuracy').textContent(),/Belum lolos: 2\/2/);
+  assert.match(await page.locator('#experiment').innerText(), /1\/1 cocok/);
+  console.log('PASS cold-start estimate is scored separately from gated signals');
   failing=true;
   await page.getByRole('button',{name:'Coba lagi'}).click();
   await page.getByText('Data belum tersinkron.',{exact:false}).waitFor();
@@ -69,8 +70,9 @@ try {
   fixture={issue:sid(351),remainingMs:25000,list:[...synthetic,{issueNumber:sid(350),number:2}]};
   await page.getByRole('button',{name:'Coba lagi'}).click();
   await page.getByText('WIN',{exact:true}).waitFor();
-  assert.match(await page.locator('#accuracy').innerText(),/1\/1/);
+  assert.match(await page.locator('#accuracy').textContent(),/1\/1/);
   console.log('PASS validated synthetic pattern signals; live accuracy is separate from historical evaluation');
+  await page.getByText('Evaluasi dan dasar metode',{exact:true}).click();
   await page.setViewportSize({width:390,height:844});
   await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});
   await page.screenshot({path:new URL('../test-results/mobile.png',import.meta.url).pathname.replace(/^\/(\w:)/,'$1'),fullPage:true});

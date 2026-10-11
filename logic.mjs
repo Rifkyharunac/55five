@@ -56,6 +56,18 @@ export function accuracy(rows) {
 }
 function validEvidence(prediction) {
   if (prediction.modelVersion !== 2) return prediction.modelVersion === undefined;
+  const estimate = prediction.estimate;
+  if (estimate !== undefined) {
+    if (estimate?.version !== 1 || ![null,'Besar','Kecil'].includes(estimate.label) ||
+      !['none','frequency','transition'].includes(estimate.method)) return false;
+    if (estimate.probability === null) {
+      if (estimate.label !== null || estimate.method !== 'none') return false;
+    } else {
+      if (!Number.isFinite(estimate.probability) || estimate.probability < 0 || estimate.probability > 1 || estimate.method === 'none') return false;
+      const expected = estimate.probability === .5 ? null : estimate.probability > .5 ? 'Besar' : 'Kecil';
+      if (estimate.label !== expected) return false;
+    }
+  }
   const e = prediction.evaluation;
   const reasons = ['insufficient','gap','context','baseline','unstable','weak','eligible'];
   if (!reasons.includes(prediction.reason) || (prediction.reason === 'eligible') !== (prediction.label !== null)) return false;
@@ -89,4 +101,23 @@ export function serverRemaining(data) {
   };
   const remaining = parse(data?.endTime) - parse(data?.serviceTime);
   return Number.isFinite(remaining) && remaining >= 0 && remaining <= 30000 ? remaining : null;
+}
+// Wilson interval for a binomial proportion. Diagnostic only: independence and
+// constant success probability are assumptions, not established properties here.
+export function wilson(wins,total) {
+  if(!Number.isInteger(total) || total<=0 || !Number.isInteger(wins) || wins<0 || wins>total) return null;
+  const z=1.959963984540054, p=wins/total, denominator=1+z*z/total;
+  const centre=(p+z*z/(2*total))/denominator;
+  const radius=z*Math.sqrt(p*(1-p)/total+z*z/(4*total*total))/denominator;
+  return { low:Math.max(0,centre-radius), high:Math.min(1,centre+radius) };
+}
+export function estimateAccuracy(rows) {
+  const resolved=rows.filter(r=>r.result!==null && r.prediction.estimate?.version===1 && r.prediction.estimate.label!==null);
+  const wins=resolved.filter(r=>category(r.result)===r.prediction.estimate.label).length;
+  return {total:resolved.length,wins,interval:wilson(wins,resolved.length)};
+}
+export function learningProgress(samples,tested) {
+  const training=Math.min(100,Math.max(0,samples));
+  const validation=Math.min(100,Math.max(0,tested));
+  return {training,validation,remaining:100-training+100-validation};
 }

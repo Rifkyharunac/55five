@@ -1,4 +1,4 @@
-import { applySnapshot, restore, accuracy, category } from './logic.mjs';
+import { applySnapshot, restore, accuracy, category, estimateAccuracy, learningProgress } from './logic.mjs';
 const reasons = { insufficient: 'Data belum cukup: perlu 100 hasil pelatihan dan 100 hasil uji berdasarkan urutan waktu.', gap: 'Hasil periode tepat sebelumnya belum tersedia.', context: 'Contoh transisi sejenis belum cukup.', baseline: 'Model belum mengungguli pembanding sederhana.', unstable: 'Kinerja 50 hasil uji terakhir melemah.', weak: 'Sinyal model terlalu dekat dengan seimbang.', eligible: 'Lolos filter eksperimen; bukan jaminan hasil berikutnya.' };
 const storageKey = '55five-predictions-v1';
 let storageOK = true;
@@ -19,16 +19,22 @@ function render() {
   tbody.replaceChildren();
   for (const row of state.rows.slice(0, 30)) {
     const tr = document.createElement('tr');
-    const status = row.result === null ? 'Menunggu hasil' : row.prediction.label === null ? 'Dilewati' :
-      category(row.result) === row.prediction.label ? 'WIN' : 'LOSE';
-    const cells = [row.issue.slice(-5), (row.prediction.label ?? 'Lewati') + (row.prediction.modelVersion === 2 ? '' : ' (lama)'),
+    const estimate = row.prediction.estimate;
+    const status = row.result === null ? 'Menunggu hasil' : row.prediction.label !== null ?
+      (category(row.result) === row.prediction.label ? 'WIN' : 'LOSE') : estimate?.label ?
+      (category(row.result) === estimate.label ? 'Cocok (estimasi)' : 'Meleset (estimasi)') : 'Tanpa estimasi';
+    const estimateText = estimate?.label ? `${estimate.label} (eksperimen)` : estimate?.probability === .5 ? 'Seimbang' : '-';
+    const signalText = row.prediction.modelVersion !== 2 ? `${row.prediction.label ?? '-'} (lama)` :
+      row.prediction.label ? `${row.prediction.label} (lolos)` : 'Belum lolos';
+    const cells = [row.issue.slice(-5), estimateText, signalText,
       `${row.prediction.samples} hasil`, '-', row.result === null ? '-' : `${category(row.result)} ${row.result}`, status];
     for (const text of cells) { const td = document.createElement('td'); td.textContent = text; tr.append(td); }
-    tr.children[0].title = row.issue; tr.children[0].setAttribute("aria-label", row.issue);
-    tr.children[1].title = reasons[row.prediction.reason] ?? 'Prediksi metode lama; keputusan asli dipertahankan.';
-    if (row.issue === state.issue && row.result === null) tr.children[3].id = 'countdown';
-    else tr.children[3].textContent = row.result === null ? 'Menunggu hasil' : 'Selesai';
-    tr.children[5].className = status === 'WIN' ? 'win' : status === 'LOSE' ? 'lose' : '';
+    tr.children[0].title = row.issue; tr.children[0].setAttribute('aria-label', row.issue);
+    tr.children[1].title = estimate?.method === 'transition' ? 'Model transisi; belum terbukti akurat.' : 'Frekuensi riwayat; belum terbukti akurat.';
+    tr.children[2].title = reasons[row.prediction.reason] ?? 'Keputusan metode lama dipertahankan.';
+    if (row.issue === state.issue && row.result === null) tr.children[4].id = 'countdown';
+    else tr.children[4].textContent = row.result === null ? 'Menunggu hasil' : 'Selesai';
+    tr.children[6].className = status === 'WIN' ? 'win' : status === 'LOSE' ? 'lose' : '';
     tbody.append(tr);
   }
   const currentRows = state.rows.filter(r => r.prediction.modelVersion === 2);
@@ -36,12 +42,23 @@ function render() {
   const skipped = currentRows.filter(r => r.prediction.label === null).length;
   const legacy = state.rows.length-currentRows.length;
   document.getElementById('accuracy').textContent = (stats.total ?
-    `Akurasi sinyal versi baru: ${stats.wins}/${stats.total} (${(100 * stats.wins / stats.total).toFixed(1)}%). ` :
-    'Akurasi sinyal versi baru belum tersedia. ') + `Dilewati: ${skipped}/${currentRows.length} periode. Riwayat lama: ${legacy} periode (terpisah).`;
+    `Sinyal lolos filter: ${stats.wins}/${stats.total} cocok (${(100 * stats.wins / stats.total).toFixed(1)}%). ` :
+    'Belum ada hasil sinyal lolos filter. ') + `Belum lolos: ${skipped}/${currentRows.length} periode. Riwayat lama: ${legacy} (terpisah).`;
+  const experiment = estimateAccuracy(state.rows);
+  document.getElementById('experiment').textContent = experiment.total ?
+    `Estimasi eksperimen: ${experiment.wins}/${experiment.total} cocok (${(100*experiment.wins/experiment.total).toFixed(1)}%); ${experiment.total-experiment.wins} meleset. Belum membuktikan kemampuan memprediksi.` :
+    'Estimasi eksperimen belum memiliki hasil. Estimasi baru mulai dicatat pada periode berikutnya jika data cukup.';
+  document.getElementById('uncertainty').textContent = experiment.interval ?
+    `Rentang Wilson 95% untuk akurasi estimasi: ${(100*experiment.interval.low).toFixed(1)}–${(100*experiment.interval.high).toFixed(1)}%. Diagnostik dengan asumsi hasil independen dan peluang benar tetap; kedua asumsi belum diverifikasi. Bukan peluang menang periode berikutnya.` :
+    'Rentang ketidakpastian belum tersedia.';
   const latest = state.rows.find(r=>r.issue===state.issue)?.prediction;
   document.getElementById('decision').textContent = latest?.modelVersion === 2 ? reasons[latest.reason] :
     'Metode baru mulai pada periode berikutnya; prediksi yang sudah tercatat tetap dipertahankan.';
   const e = latest?.modelVersion === 2 ? latest.evaluation : null;
+  const progress = learningProgress(latest?.samples ?? 0,e?.tested ?? 0);
+  document.getElementById('progress').textContent = `Pelatihan ${progress.training}/100 | Uji ${progress.validation}/100. ` +
+    (progress.remaining ? `Sedikitnya ${progress.remaining} hasil tambahan untuk memenuhi jumlah minimum; data terlewat bisa menambah kebutuhan. ` : 'Jumlah minimum tercapai; kualitas model tetap diperiksa. ') +
+    'Data bertambah selama halaman tersambung; angka 200 bukan jaminan sinyal akan lolos.';
   document.getElementById('validation').textContent = e ?
     `Uji historis kandidat: ${e.tested} hasil uji; minimum 100, maksimal 200 hasil terbaru. ` + (e.tested ?
       `Benar ${e.wins}/${e.tested}; pembanding frekuensi ${e.baselineWins}/${e.tested}. Brier model ${e.brier.toFixed(3)}, frekuensi ${e.baselineBrier.toFixed(3)}, netral 0.250; lebih kecil lebih baik. Ini bukan akurasi sinyal live atau probabilitas menang yang terkalibrasi.` :

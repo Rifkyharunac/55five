@@ -57,6 +57,13 @@ export function evaluatePrediction(history,issue) {
     evaluation.wins/evaluation.tested<Math.max(.55,evaluation.baselineWins/evaluation.tested+POLICY.accuracyGain)) reason='baseline';
   else if(recent.brier>=Math.min(.25,recent.baselineBrier)) reason='unstable';
   else if(Math.abs(current.probability-.5)<POLICY.margin) reason='weak';
-  return { modelVersion:MODEL_VERSION, label:reason==='eligible'?(current.probability>=.5?'Besar':'Kecil'):null,
+  // Shadow estimates are recorded even while the signal gate is closed.
+  // Small contexts use the simple frequency baseline, never a fabricated pattern.
+  const available = current.samples >= 10 && current.connected;
+  const method = current.count >= POLICY.context ? 'transition' : 'frequency';
+  const probability = available ? (method === 'transition' ? current.probability : current.baseline) : null;
+  const estimate = { version:1, label:probability === null || probability === .5 ? null : probability > .5 ? 'Besar' : 'Kecil',
+    probability, method:available ? method : 'none' };
+  return { estimate, modelVersion:MODEL_VERSION, label:reason==='eligible'?(current.probability>=.5?'Besar':'Kecil'):null,
     samples:current.samples,bigRate:current.probability,reason,evaluation };
 }
