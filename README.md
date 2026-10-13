@@ -29,6 +29,10 @@ riilnya tampil apa adanya di scorecard sesi; statistik bersifat deskriptif,
 bukan ramalan. Skrip backtest: `backtest-pola.js`
 (`node backtest-pola.js data/riwayat.json`).
 
+Setiap baris prediksi menampilkan label kecil metodenya (`pola-6`,
+`mayoritas-30`, `mayoritas-all`, `acak`) — lihat legenda di bawah tabel.
+Penilaian WIN/LOSE memakai nilai prediksi murni (label tidak ikut dihitung).
+
 ## Deploy
 
 Auto-deploy ke Vercel dari branch `main`. File statis (`data/riwayat.json`)
