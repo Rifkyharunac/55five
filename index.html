@@ -115,7 +115,7 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
         <div class="color-card"><div class="num" id="colUngu">–</div><div class="lbl"><span class="dot ungu"></span>Ungu</div></div>
       </div>
     </section>
-    <p class="disclaimer">Statistik deskriptif dari riwayat yang tersimpan di perangkat ini. Tiap ronde WinGo acak dan independen — data ini menggambarkan yang sudah terjadi, bukan ramalan hasil berikutnya.</p>
+    <p class="disclaimer">Statistik deskriptif dari riwayat hasil yang terkumpul. Tiap ronde WinGo acak dan independen — data ini menggambarkan yang sudah terjadi, bukan ramalan hasil berikutnya.</p>
   </div>
 </section>
 <section class="web55" aria-label="Situs 55five">
@@ -133,8 +133,22 @@ function kategori(num){
   return num <= 4 ? "Kecil" : "Besar";
 }
 
+// Baseline prediksi berbasis riwayat (pengganti Math.random):
+// prediksi = kategori mayoritas dari 30 ronde terakhir pada data riwayat.
+// Ini baseline naive — tiap ronde tetap acak & independen; akurasi riilnya
+// tampil transparan di scorecard sesi. Dataset: data/riwayat.json (sementara,
+// update final 15 Okt 2026).
 function buatPrediksi(){
-  return Math.random() > 0.5 ? "Besar" : "Kecil";
+  const hist = semuaRiwayat();
+  if(!hist.length) return Math.random() > 0.5 ? "Besar" : "Kecil"; // fallback cold-start
+  const w = hist.slice(0, 30);
+  let besar = 0;
+  for(const e of w) if(e.h >= 5) besar++;
+  if(besar * 2 !== w.length) return besar * 2 > w.length ? "Besar" : "Kecil";
+  // seri 15-15: pakai mayoritas seluruh riwayat
+  let bAll = 0;
+  for(const e of hist) if(e.h >= 5) bAll++;
+  return bAll * 2 >= hist.length ? "Besar" : "Kecil";
 }
 
 async function ambilAPI(){
@@ -323,6 +337,33 @@ async function muatRiwayatAwal(){
   }catch(e){ console.log("HISTORY ERROR:", e); }
 }
 
+/* ============ DATASET RIWAYAT BAWAAN (data/riwayat.json) ============ */
+// Snapshot hasil WinGo 30s (±922 ronde, 8–13 Okt 2026). DATA SEMENTARA —
+// diganti versi final pada 15 Okt 2026 (cukup timpa satu file ini).
+// Dipakai untuk: (1) mengisi tab Statistik saat pertama dibuka,
+// (2) baseline prediksi berbasis riwayat. Disimpan di memori saja,
+// tidak masuk localStorage; riwayat live dari /api tetap digabung di atasnya.
+let datasetSeed = [];
+async function muatDatasetSeed(){
+  try{
+    const res = await fetch("data/riwayat.json?t=" + Date.now());
+    const arr = await res.json();
+    if(Array.isArray(arr)){
+      datasetSeed = arr.filter(e => e && e.p && Number.isInteger(e.h) && e.h >= 0 && e.h <= 9);
+      datasetSeed.sort((a, b) => (a.p < b.p ? 1 : -1)); // terbaru dulu
+      renderStats();
+    }
+  }catch(e){ console.log("DATASET SEED ERROR:", e); }
+}
+// Riwayat gabungan: live (localStorage) + seed, dedupe per periode, terbaru dulu
+function semuaRiwayat(){
+  const live = bacaRiwayat();
+  const ada = new Set(live.map(e => e.p));
+  const gab = live.concat(datasetSeed.filter(e => !ada.has(e.p)));
+  gab.sort((a, b) => (a.p < b.p ? 1 : -1));
+  return gab;
+}
+
 /* ============ STATISTIK DESKRIPTIF ============ */
 // Pemetaan warna terverifikasi: 1,3,7,9 hijau; 2,4,6,8 merah; 0 merah+ungu; 5 hijau+ungu
 function warnaDigit(h){
@@ -334,7 +375,7 @@ const BAR_COLORS = ["#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e",
 let chartFreq = null;
 
 function renderStats(){
-  const hist = bacaRiwayat();
+  const hist = semuaRiwayat();
   const meta = document.getElementById("statsMeta");
   const n = hist.length;
   if(!n){
@@ -353,7 +394,7 @@ function renderStats(){
   const pct = (x) => (100 * x / n).toFixed(1) + "%";
   const now = new Date();
   const jam = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + ":" + String(now.getSeconds()).padStart(2, "0");
-  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde terakhir · diperbarui " + jam;
+  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde riwayat · diperbarui " + jam;
 
   document.getElementById("bkBesarNum").textContent = besar;
   document.getElementById("bkBesarPct").textContent = pct(besar);
@@ -441,6 +482,7 @@ async function start(){
   const data = await ambilAPI();
   if(!data || data.error) return;
   lastPeriode = parseInt(data.periode, 10);
+  await muatDatasetSeed(); // seed dulu agar prediksi & statistik pakai riwayat
   tambahBaris(lastPeriode);
   cocokkanHasil(data.list);
   muatRiwayatAwal();
