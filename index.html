@@ -354,7 +354,8 @@ function simpanRiwayat(list){
   gabungRiwayat(list, true);
   renderStats();
 }
-// Dipanggil sekali saat start: ambil bulk ~100 ronde dari /api/history
+// Dipanggil sekali saat start: ambil ronde-ronde terbaru dari /api/history
+// (backend membatasi 10 ronde terakhir) lalu gabung ke riwayat lokal.
 async function muatRiwayatAwal(){
   try{
     const res = await fetch("/api/history?t=" + Date.now());
