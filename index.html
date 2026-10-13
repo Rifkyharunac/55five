@@ -37,6 +37,8 @@ tbody tr:nth-child(even){background:#ffffff03}tbody tr:first-child{background:#6
 td:first-child{font-weight:600;color:#c7d6e9}td:nth-child(2){font-weight:600}.count{color:var(--accent);font-weight:700}
 .win{color:#75edb2;font-weight:750}.lose{color:#ff9ba4;font-weight:750}td.win{background:#75edb20a}td.lose{background:#ff9ba40a}
 .empty-state{margin:0;padding:20px;text-align:center;color:var(--muted);font-size:13px}.table-scroll:has(tbody tr) .empty-state{display:none}
+.metode{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+.legend{margin:8px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
 .stats-scroll{padding:4px 16px 16px;border-top:1px solid var(--line)}
 .stats-meta{margin:12px 0 16px;font-size:12px;line-height:1.6;color:var(--muted)}.stats-meta b{color:var(--text)}
 .stats-block{margin:0 0 18px}.stats-block h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
@@ -84,6 +86,7 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
       <tbody id="dataBody"></tbody>
     </table>
     <p class="empty-state">Menunggu data periode…</p>
+    <p class="legend">Label kecil di kolom Prediksi menunjukkan metodenya: <b>pola-6</b> = pola mirip riwayat, <b>mayoritas-30</b>/<b>mayoritas-all</b> = fallback mayoritas, <b>acak</b> = belum ada riwayat. Arahkan kursor ke label untuk penjelasan.</p>
   </div>
   <div class="stats-scroll" id="viewStatistik" role="tabpanel" aria-labelledby="tabStatistik" hidden>
     <p class="stats-meta" id="statsMeta">Memuat riwayat…</p>
@@ -165,19 +168,31 @@ function prediksiPolaMirip(){
   return b * 2 > nexts.length ? "Besar" : "Kecil";
 }
 
-function buatPrediksi(){
+const METODE_LABEL = {
+  "pola-6": "Pola mirip riwayat: 6 ronde terakhir dicocokkan ke segmen riwayat lama yang polanya sama",
+  "mayoritas-30": "Fallback: kategori mayoritas 30 ronde terakhir",
+  "mayoritas-all": "Fallback: kategori mayoritas seluruh riwayat",
+  "acak": "Acak: belum ada riwayat sama sekali"
+};
+
+// Strategi prediksi: kembalikan { prediksi, metode } agar asal tiap prediksi
+// transparan (ditampilkan sebagai label kecil di kolom Prediksi).
+function strategiPrediksi(){
   const pola = prediksiPolaMirip();
-  if(pola) return pola;
-  // Fallback: baseline mayoritas 30 ronde terakhir (seri -> mayoritas semua)
+  if(pola) return { prediksi: pola, metode: "pola-6" };
   const hist = semuaRiwayat();
-  if(!hist.length) return Math.random() > 0.5 ? "Besar" : "Kecil"; // fallback cold-start
+  if(!hist.length) return { prediksi: Math.random() > 0.5 ? "Besar" : "Kecil", metode: "acak" };
   const w = hist.slice(0, 30);
   let besar = 0;
   for(const e of w) if(e.h >= 5) besar++;
-  if(besar * 2 !== w.length) return besar * 2 > w.length ? "Besar" : "Kecil";
+  if(besar * 2 !== w.length) return { prediksi: besar * 2 > w.length ? "Besar" : "Kecil", metode: "mayoritas-30" };
   let bAll = 0;
   for(const e of hist) if(e.h >= 5) bAll++;
-  return bAll * 2 >= hist.length ? "Besar" : "Kecil";
+  return { prediksi: bAll * 2 >= hist.length ? "Besar" : "Kecil", metode: "mayoritas-all" };
+}
+
+function buatPrediksi(){
+  return strategiPrediksi().prediksi;
 }
 
 async function ambilAPI(){
@@ -197,9 +212,11 @@ function tambahBaris(periode){
   const tr = document.createElement("tr");
   tr.dataset.periode = p;
   tr.dataset.done = "0";
+  const sp = strategiPrediksi();
+  tr.dataset.prediksi = sp.prediksi;
   tr.innerHTML = `
     <td>${p}</td>
-    <td>${buatPrediksi()}</td>
+    <td>${sp.prediksi} <span class="metode" title="${METODE_LABEL[sp.metode]}">${sp.metode}</span></td>
     <td class="count">-</td>
     <td class="hasil">-</td>
     <td class="status">-</td>
@@ -215,7 +232,7 @@ function isiHasil(tr, hasil){
   const kategoriHasil = kategori(hasil);
   tr.querySelector(".hasil").innerText = kategoriHasil + " " + hasil;
   const statusCell = tr.querySelector(".status");
-  const prediksi = tr.children[1].innerText;
+  const prediksi = tr.dataset.prediksi || tr.children[1].innerText;
   if(prediksi === kategoriHasil){
     statusCell.innerText = "WIN";
     statusCell.className = "status win";
