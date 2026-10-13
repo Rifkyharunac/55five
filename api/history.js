@@ -1,12 +1,13 @@
-// GET /api/history — riwayat hasil Win Go 30s (bulk, sekali panggil).
-// Mengambil beberapa halaman GetNoaverageEmerdList sekaligus lalu menggabung
-// dan mendedup berdasarkan issueNumber. Dipakai frontend untuk membangun
-// riwayat lokal (localStorage) saat pertama dibuka; update berikutnya cukup
-// lewat /api biasa tiap 2 detik.
+// GET /api/history — riwayat hasil Win Go 30s terbaru.
+// Catatan: backend 55five hanya mengembalikan 10 ronde terakhir untuk
+// endpoint GetNoaverageEmerdList (pageNo > 1 kosong, pageSize > 10 ditolak),
+// jadi endpoint ini mengembalikan 10 ronde terbaru dalam format standar
+// { issueNumber, number, hasil, colour }. Riwayat bulk yang sebenarnya
+// berasal dari data/riwayat.json (snapshot studi, di-seed saat start).
 
 const BACKEND = "https://newapi.55lottertttapi.com/api/webapi/GetNoaverageEmerdList";
 
-// Ambil kredensial body yang sama seperti api/index.js
+// Kredensial body yang sama seperti api/index.js
 const BASE_BODY = {
   typeId: 30,
   language: 0,
@@ -15,44 +16,31 @@ const BASE_BODY = {
   timestamp: 1737252405
 };
 
-const PAGES = 10;      // 10 halaman ...
-const PAGE_SIZE = 10;  // ... @10 baris = ~100 ronde terbaru
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   try {
-    const jobs = [];
-    for (let pageNo = 1; pageNo <= PAGES; pageNo++) {
-      jobs.push(
-        fetch(BACKEND, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...BASE_BODY, pageSize: PAGE_SIZE, pageNo })
-        })
-          .then((r) => r.json())
-          .catch(() => null)
-      );
-    }
-
-    const pages = await Promise.all(jobs);
+    const r = await fetch(BACKEND, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...BASE_BODY, pageSize: 10, pageNo: 1 })
+    });
+    const j = await r.json().catch(() => null);
 
     const seen = new Set();
     const list = [];
-    for (const j of pages) {
-      for (const e of j?.data?.list || []) {
-        if (!e?.issueNumber || seen.has(e.issueNumber)) continue;
-        seen.add(e.issueNumber);
-        const hasil = parseInt(String(e.number).split(",").pop(), 10);
-        if (Number.isNaN(hasil)) continue;
-        list.push({
-          issueNumber: e.issueNumber,
-          number: e.number,
-          hasil,
-          colour: e.colour || ""
-        });
-      }
+    for (const e of j?.data?.list || []) {
+      if (!e?.issueNumber || seen.has(e.issueNumber)) continue;
+      seen.add(e.issueNumber);
+      const hasil = parseInt(String(e.number).split(",").pop(), 10);
+      if (Number.isNaN(hasil)) continue;
+      list.push({
+        issueNumber: e.issueNumber,
+        number: e.number,
+        hasil,
+        colour: e.colour || ""
+      });
     }
 
     // Terbaru dulu (issueNumber format tetap, string compare aman)
