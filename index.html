@@ -133,19 +133,48 @@ function kategori(num){
   return num <= 4 ? "Kecil" : "Besar";
 }
 
-// Baseline prediksi berbasis riwayat (pengganti Math.random):
-// prediksi = kategori mayoritas dari 30 ronde terakhir pada data riwayat.
-// Ini baseline naive — tiap ronde tetap acak & independen; akurasi riilnya
-// tampil transparan di scorecard sesi. Dataset: data/riwayat.json (sementara,
-// update final 15 Okt 2026).
+// Strategi prediksi "pola mirip riwayat" (pengganti Math.random):
+// Ambil 6 ronde terakhir sebagai pola query (urutan Besar/Kecil), cari segmen
+// riwayat lama yang polanya PERSIS sama, lalu ikuti hasil mayoritas dari
+// "ronde sesudah segmen-segmen itu". Kalau kecocokan < 3 atau seri,
+// fallback ke baseline mayoritas 30 ronde terakhir.
+// Catatan jujur: backtest walk-forward pada 922 ronde (8-13 Okt 2026)
+// menghasilkan akurasi 51,95% — secara statistik tidak beda dari lempar koin,
+// karena tiap ronde acak & independen. Scorecard sesi menampilkan akurasi riil.
+function prediksiPolaMirip(){
+  const N = 6, MIN_MATCH = 3;
+  const hist = semuaRiwayat(); // terbaru dulu
+  if(hist.length < N + 10) return null;
+  const kat = e => (e.h >= 5 ? "Besar" : "Kecil");
+  const query = [];
+  for(let k = 0; k < N; k++) query.push(kat(hist[k]));
+  const nexts = [];
+  // window hist[j..j+N-1], j>=N => sepenuhnya lebih tua dari query;
+  // hasil kronologis sesudah window = hist[j-1]
+  for(let j = N; j + N <= hist.length; j++){
+    let sama = true;
+    for(let k = 0; k < N; k++){
+      if(kat(hist[j + k]) !== query[k]){ sama = false; break; }
+    }
+    if(sama) nexts.push(kat(hist[j - 1]));
+  }
+  if(nexts.length < MIN_MATCH) return null;
+  let b = 0;
+  for(const c of nexts) if(c === "Besar") b++;
+  if(b * 2 === nexts.length) return null; // seri -> fallback
+  return b * 2 > nexts.length ? "Besar" : "Kecil";
+}
+
 function buatPrediksi(){
+  const pola = prediksiPolaMirip();
+  if(pola) return pola;
+  // Fallback: baseline mayoritas 30 ronde terakhir (seri -> mayoritas semua)
   const hist = semuaRiwayat();
   if(!hist.length) return Math.random() > 0.5 ? "Besar" : "Kecil"; // fallback cold-start
   const w = hist.slice(0, 30);
   let besar = 0;
   for(const e of w) if(e.h >= 5) besar++;
   if(besar * 2 !== w.length) return besar * 2 > w.length ? "Besar" : "Kecil";
-  // seri 15-15: pakai mayoritas seluruh riwayat
   let bAll = 0;
   for(const e of hist) if(e.h >= 5) bAll++;
   return bAll * 2 >= hist.length ? "Besar" : "Kecil";
