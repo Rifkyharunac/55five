@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>55FIVE • Panel Prediksi</title>
+<title>55FIVE • Panel WinGo</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--panel:#111c2e;--line:#26354a;--text:#edf3fb;--muted:#a8b7cb;--accent:#6de4ce}
 *{box-sizing:border-box}
@@ -17,12 +17,16 @@ body{margin:0;height:100vh;height:100dvh;padding:12px;background:var(--bg);color
 .brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--accent);color:#102a28;font-size:17px;font-weight:850;flex-shrink:0}
 h1{font-size:16px;letter-spacing:.08em;margin:0;line-height:1.3}
 .subtitle{margin:3px 0 0;font-size:11px;color:var(--muted)}
-.period-label{font-size:11px;color:var(--accent);border:1px solid #6de4ce40;background:#6de4ce0b;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.livebox{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.live-periode{text-align:right}
+.live-periode .lbl{display:block;font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.live-periode .val{display:block;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text)}
+.live-count{min-width:52px;height:52px;padding:0 8px;border-radius:12px;display:grid;place-items:center;background:#6de4ce14;border:1px solid #6de4ce40;color:var(--accent);font-size:20px;font-weight:850;font-variant-numeric:tabular-nums}
 .tabs{display:flex;gap:4px;margin:0 12px 10px;padding:4px;background:#0b1423;border:1px solid var(--line);border-radius:12px;flex-shrink:0}
-.tab-btn{flex:1;min-height:40px;min-width:0;padding:8px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
+.tab-btn{flex:1;min-height:40px;min-width:0;padding:8px 4px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
 .tab-btn[aria-selected="true"]{background:#20374a;color:var(--accent);box-shadow:0 1px 4px #0003}
 .tab-btn:hover{color:var(--text)}
-.tab-btn:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.tab-btn:focus-visible,a:focus-visible,[tabindex]:focus-visible,.range-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
 .scorebar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:0 12px 12px;flex-shrink:0;font-variant-numeric:tabular-nums}
 .scorebar>span{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-width:0;padding:8px 3px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:10px;font-weight:500;background:#0d1728}
 .scorebar b{font-size:15px;font-weight:750;color:var(--text);white-space:nowrap}.scorebar .win b{color:#75edb2}.scorebar .lose b{color:#ff9ba4}.scorebar .saldo b{color:#ffd479}
@@ -38,10 +42,19 @@ td:first-child{font-weight:600;color:#c7d6e9}td:nth-child(2){font-weight:600}.co
 .win{color:#75edb2;font-weight:750}.lose{color:#ff9ba4;font-weight:750}td.win{background:#75edb20a}td.lose{background:#ff9ba40a}
 .empty-state{margin:0;padding:20px;text-align:center;color:var(--muted);font-size:13px}.table-scroll:has(tbody tr) .empty-state{display:none}
 .metode{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:6px;white-space:nowrap;vertical-align:1px}
-.legend{margin:8px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.legend{margin:8px 16px 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.method-wrap{margin:14px 16px 18px;border-top:1px solid var(--line);padding-top:12px}
+.method-wrap h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+table.method{font-size:12px}
+table.method th{position:static;font-size:10px;padding:7px 4px}
+table.method td{height:auto;padding:7px 4px}
 .stats-scroll{padding:4px 16px 16px;border-top:1px solid var(--line)}
-.stats-meta{margin:12px 0 16px;font-size:12px;line-height:1.6;color:var(--muted)}.stats-meta b{color:var(--text)}
-.stats-block{margin:0 0 18px}.stats-block h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.stats-meta{margin:12px 0 12px;font-size:12px;line-height:1.6;color:var(--muted)}.stats-meta b{color:var(--text)}
+.range-row{display:flex;gap:6px;margin:0 0 14px}
+.range-btn{flex:1;padding:8px 4px;border:1px solid var(--line);border-radius:8px;background:#0d1728;color:var(--muted);font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.range-btn[aria-pressed="true"]{background:#20374a;color:var(--accent);border-color:#6de4ce40}
+.stats-block,.edu-block,.pola-block{margin:0 0 18px}
+.stats-block h2,.edu-block h2,.pola-block h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
 .chart-wrap{position:relative;height:200px;min-width:0}.chart-wrap:has(+.chart-fallback:not([hidden])){display:none}
 .bk-row,.color-row{display:flex;gap:8px}
 .bk-card,.color-card{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center;background:#0d1728;overflow-wrap:anywhere}
@@ -50,12 +63,27 @@ td:first-child{font-weight:600;color:#c7d6e9}td:nth-child(2){font-weight:600}.co
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.dot.hijau{background:#22c55e}.dot.merah{background:#ef4444}.dot.ungu{background:#a855f7}
 .disclaimer{margin:4px 0 0;font-size:11px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .chart-fallback{color:var(--muted);font-size:12px;line-height:1.5;padding:12px;border:1px dashed var(--line);border-radius:8px;text-align:center}
+table.recent{font-size:12px}
+table.recent th{position:static;font-size:10px;padding:8px 4px}
+table.recent td{height:auto;padding:7px 4px}
+.strip{display:flex;gap:5px;flex-wrap:wrap;margin:2px 0 6px}
+.pip{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:14px;font-weight:800;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.pip.B{background:#22c55e1c;border-color:#22c55e66;color:#75edb2}
+.pip.K{background:#ef44441c;border-color:#ef444466;color:#ff9ba4}
+.pola-note{font-size:11px;line-height:1.6;color:var(--muted);margin:8px 0 0}
+.edu-block p{font-size:13px;line-height:1.7;margin:0 0 10px;color:var(--text)}
+.edu-block p.muted{color:var(--muted);font-size:12px}
+.edu-block ul{margin:0 0 10px;padding-left:20px;font-size:13px;line-height:1.7;color:var(--text)}
+table.pay{font-size:12px}
+table.pay th{position:static;font-size:10px;padding:8px 4px}
+table.pay td{height:auto;padding:8px 6px;text-align:left}
+table.pay td.num{text-align:center;font-weight:700}
 .web55{display:flex;flex-direction:column;background:#0d1625}
 .web-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;min-height:44px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);flex-shrink:0}
 a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
 iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
 @supports(height:100dvh){body{grid-template-rows:clamp(320px,45dvh,480px) minmax(0,1fr)}}
-@media(max-width:600px){body{padding:8px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom));gap:8px;grid-template-rows:clamp(310px,52vh,440px) minmax(0,1fr)}.panel,.web55{border-radius:12px}.panel-heading{padding:10px 12px;gap:8px}h1{font-size:15px}.brand-mark{width:30px;height:30px;font-size:15px}.tabs{margin:0 8px 8px}.scorebar{gap:4px;padding:0 8px 8px}.scorebar>span{padding:7px 2px;font-size:9px}.scorebar b{font-size:12px}table{font-size:12px}th{font-size:10px;padding:9px 3px;letter-spacing:0}td{padding:7px 3px;height:36px}.stats-scroll{padding:0 10px 12px}.chart-wrap{height:180px}.bk-card .num,.color-card .num{font-size:19px}.web-heading{padding:0 12px}}
+@media(max-width:600px){body{padding:8px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom));gap:8px;grid-template-rows:clamp(310px,52vh,440px) minmax(0,1fr)}.panel,.web55{border-radius:12px}.panel-heading{padding:10px 12px;gap:8px}h1{font-size:15px}.brand-mark{width:30px;height:30px;font-size:15px}.live-count{min-width:44px;height:44px;font-size:17px}.live-periode .val{font-size:14px}.tabs{margin:0 8px 8px}.tab-btn{font-size:12px}.scorebar{gap:4px;padding:0 8px 8px}.scorebar>span{padding:7px 2px;font-size:9px}.scorebar b{font-size:12px}table{font-size:12px}th{font-size:10px;padding:9px 3px;letter-spacing:0}td{padding:7px 3px;height:36px}.stats-scroll{padding:0 10px 12px}.chart-wrap{height:180px}.bk-card .num,.color-card .num{font-size:19px}.web-heading{padding:0 12px}.pip{width:32px;height:32px;font-size:12px}}
 @supports(height:100dvh){@media(max-width:600px){body{grid-template-rows:clamp(310px,52dvh,440px) minmax(0,1fr)}}}
 @media(max-height:600px) and (min-width:680px){body{grid-template-columns:minmax(310px,42%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:6px;gap:6px}.panel-heading{padding:8px 12px}.tabs{margin:0 8px 8px}.scorebar{padding:0 8px 8px;gap:4px}.scorebar>span{font-size:9px}.scorebar b{font-size:12px}table{font-size:12px}.chart-wrap{height:160px}}
 @media(max-height:520px) and (max-width:679px){body{height:auto;min-height:100vh;min-height:100dvh;overflow:auto;grid-template-rows:310px max(200px,45vh)}.web55{min-height:200px}}
@@ -65,12 +93,17 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
 <body>
 <section class="panel" aria-labelledby="panel-title">
   <header class="panel-heading">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">55</span><div><h1 id="panel-title">55FIVE</h1><p class="subtitle">Ringkasan periode &amp; hasil</p></div></div>
-    <span class="period-label">30 detik</span>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">55</span><div><h1 id="panel-title">55FIVE</h1><p class="subtitle">Panel WinGo 30 detik</p></div></div>
+    <div class="livebox" aria-label="Periode berjalan">
+      <div class="live-periode"><span class="lbl">Periode</span><span class="val" id="livePeriode">–</span></div>
+      <div class="live-count" id="liveCount" aria-label="Hitung mundur">–</div>
+    </div>
   </header>
   <nav class="tabs" role="tablist" aria-label="Tampilan panel">
     <button class="tab-btn" id="tabPrediksi" role="tab" aria-selected="true" aria-controls="viewPrediksi">Prediksi</button>
     <button class="tab-btn" id="tabStatistik" role="tab" aria-selected="false" aria-controls="viewStatistik">Statistik</button>
+    <button class="tab-btn" id="tabPola" role="tab" aria-selected="false" aria-controls="viewPola">Pola</button>
+    <button class="tab-btn" id="tabEdukasi" role="tab" aria-selected="false" aria-controls="viewEdukasi">Edukasi</button>
   </nav>
   <div class="scorebar" id="scoreBar" aria-label="Scorecard sesi">
     <span>Total selesai<b id="scTotal">0</b></span>
@@ -79,6 +112,7 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
     <span>Akurasi<b id="scRate">–</b></span>
     <span class="saldo" title="Uang virtual untuk edukasi">Saldo demo<b id="scSaldo">1.000</b></span>
   </div>
+
   <div class="table-scroll" id="viewPrediksi" role="tabpanel" aria-labelledby="tabPrediksi" tabindex="0" aria-label="Riwayat prediksi, dapat digulir">
     <table>
       <caption>Prediksi dan hasil tiap periode</caption>
@@ -86,10 +120,25 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
       <tbody id="dataBody"></tbody>
     </table>
     <p class="empty-state">Menunggu data periode…</p>
-    <p class="legend">Label kecil di kolom Prediksi menunjukkan metodenya: <b>pola-6</b> = pola mirip riwayat, <b>mayoritas-30</b>/<b>mayoritas-all</b> = fallback mayoritas, <b>acak</b> = belum ada riwayat. Arahkan kursor ke label untuk penjelasan.</p>
+    <p class="legend">Label kecil di kolom Prediksi menunjukkan metodenya: <b>pola-6</b> = pola mirip riwayat, <b>mayoritas-30</b>/<b>mayoritas-all</b> = fallback mayoritas, <b>acak</b> = belum ada riwayat. Arahkan kursor / sentuh label untuk penjelasan.</p>
+    <div class="method-wrap" aria-label="Kinerja per metode">
+      <h2>Kinerja metode sesi ini</h2>
+      <table class="method">
+        <caption>Menang-kalah per metode prediksi</caption>
+        <thead><tr><th scope="col">Metode</th><th scope="col">WIN</th><th scope="col">LOSE</th><th scope="col">Akurasi</th></tr></thead>
+        <tbody id="methodBody"><tr><td colspan="4" style="color:var(--muted)">Belum ada ronde selesai.</td></tr></tbody>
+      </table>
+      <p class="legend" style="margin:8px 0 0">Tiap metode dinilai terpisah dari hasil aslinya — transparan, tanpa klaim akurasi.</p>
+    </div>
   </div>
+
   <div class="stats-scroll" id="viewStatistik" role="tabpanel" aria-labelledby="tabStatistik" hidden>
     <p class="stats-meta" id="statsMeta">Memuat riwayat…</p>
+    <div class="range-row" role="group" aria-label="Rentang data statistik">
+      <button class="range-btn" data-range="0" aria-pressed="true">Semua</button>
+      <button class="range-btn" data-range="500" aria-pressed="false">500 terakhir</button>
+      <button class="range-btn" data-range="100" aria-pressed="false">100 terakhir</button>
+    </div>
     <section class="stats-block" aria-label="Frekuensi angka">
       <h2>Frekuensi angka 0–9</h2>
       <div class="chart-wrap"><canvas id="chartFreq" aria-label="Grafik batang frekuensi angka"></canvas></div>
@@ -118,7 +167,72 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
         <div class="color-card"><div class="num" id="colUngu">–</div><div class="lbl"><span class="dot ungu"></span>Ungu</div></div>
       </div>
     </section>
+    <section class="stats-block" aria-label="Ronde terakhir">
+      <h2>30 ronde terakhir</h2>
+      <table class="recent">
+        <caption>Hasil 30 ronde terakhir</caption>
+        <thead><tr><th scope="col">Periode</th><th scope="col">Angka</th><th scope="col">B / K</th><th scope="col">Warna</th></tr></thead>
+        <tbody id="recentBody"><tr><td colspan="4" style="color:var(--muted)">Memuat…</td></tr></tbody>
+      </table>
+    </section>
     <p class="disclaimer">Statistik deskriptif dari riwayat hasil yang terkumpul. Tiap ronde WinGo acak dan independen — data ini menggambarkan yang sudah terjadi, bukan ramalan hasil berikutnya.</p>
+  </div>
+
+  <div class="stats-scroll" id="viewPola" role="tabpanel" aria-labelledby="tabPola" hidden>
+    <p class="stats-meta" id="polaMeta">Memuat riwayat…</p>
+    <section class="pola-block" aria-label="Strip hasil terakhir">
+      <h2>20 ronde terakhir</h2>
+      <div class="strip" id="polaStrip"></div>
+      <p class="pola-note">Hijau = Besar (5–9), merah = Kecil (0–4). Urutan kiri ke kanan dari lama ke baru.</p>
+    </section>
+    <section class="pola-block" aria-label="Indikator pola">
+      <h2>Indikator bentuk pola</h2>
+      <div class="bk-row">
+        <div class="bk-card"><div class="num" id="polaStreak" style="font-size:19px">–</div><div class="lbl">Streak berjalan</div></div>
+        <div class="bk-card"><div class="num" id="polaDragon" style="font-size:19px">–</div><div class="lbl">Dragon terakhir (≥4)</div></div>
+        <div class="bk-card"><div class="num" id="polaAbab" style="font-size:19px">–</div><div class="lbl">Selang-seling (ABAB)</div></div>
+      </div>
+      <p class="pola-note"><b>Ini deskripsi, bukan sinyal.</b> Bentuk pola di atas meringkas apa yang baru saja terjadi; tiap ronde berikutnya tetap acak dan independen, jadi pola ini tidak memprediksi hasil selanjutnya.</p>
+    </section>
+  </div>
+
+  <div class="stats-scroll" id="viewEdukasi" role="tabpanel" aria-labelledby="tabEdukasi" hidden>
+    <section class="edu-block" aria-label="Payout">
+      <h2>Berapa bayarannya?</h2>
+      <table class="pay">
+        <caption>Perkiraan pembayaran tiap jenis taruhan</caption>
+        <thead><tr><th scope="col">Taruhan</th><th scope="col">Bayar (× modal)</th></tr></thead>
+        <tbody>
+          <tr><td>Tebak angka tepat (0–9)</td><td class="num">±9×</td></tr>
+          <tr><td>Hijau / Merah</td><td class="num">±2× <span style="color:var(--muted);font-weight:400">(±1,96× setelah fee)</span></td></tr>
+          <tr><td>Ungu (0 atau 5)</td><td class="num">±4,5×</td></tr>
+          <tr><td>Warna cocok pada 0 / 5</td><td class="num">±1,5×</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Angka dari referensi edukasi (wingo30.com); pastikan di situs resmi karena payout bisa berubah.</p>
+    </section>
+    <section class="edu-block" aria-label="House edge">
+      <h2>Kenapa bandar selalu unggul?</h2>
+      <p>Contoh: taruhan <b>Hijau</b> menang 5 dari 10 ronde (peluang 50%), tapi dibayar kurang dari 2× modal. Selisih itulah <b>house edge</b> — dalam jangka panjang, nilai harapan (EV) setiap taruhan itu negatif untuk pemain, <b>tidak peduli strategi apa pun yang dipakai</b>.</p>
+      <p>Strategi seperti Martingale (menggandakan taruhan saat kalah) tidak mengubah EV ini — ia hanya menukar banyak kemenangan kecil dengan sedikit kekalahan yang sangat besar.</p>
+    </section>
+    <section class="edu-block" aria-label="Kejujuran prediksi">
+      <h2>Kenapa panel ini tidak menjanjikan akurasi 80%?</h2>
+      <ul>
+        <li>Tiap ronde WinGo <b>acak dan independen</b> — hasil sebelumnya tidak memengaruhi hasil berikutnya.</li>
+        <li>Empat strategi di-backtest berdampingan pada 1.123 ronde (8–14 Okt 2026): pola-6 <b>51,22%</b>, ikut-streak 49,95%, acak 49,46%, mayoritas-30 47,21% — semuanya sekitar lempar koin. Skrip backtest-nya ada di repo (<span style="font-family:monospace">backtest-pola.js</span>) dan bisa dijalankan ulang siapa saja.</li>
+        <li>Penjual "sinyal AI" berakurasi 80–100% yang beredar di Telegram/YouTube terbukti penipuan menurut riset referensi kami.</li>
+      </ul>
+      <p>Yang panel ini lakukan: menampilkan tebakan berbasis riwayat <b>dengan metodenya yang transparan</b>, lalu menilai kejujurannya lewat <b>scorecard sesi</b> dan <b>saldo demo</b> (uang virtual). Kalau akurasinya memang sekitar 50%, itulah faktanya.</p>
+    </section>
+    <section class="edu-block" aria-label="Cara membaca panel">
+      <h2>Cara membaca panel ini</h2>
+      <ul>
+        <li><b>Prediksi</b> = tebakan untuk ronde berjalan + label metodenya (pola-6, mayoritas-30, dst.). Bukan ramalan.</li>
+        <li><b>Scorecard</b> = hasil riil tebakan sesi ini: WIN/LOSE, akurasi, dan saldo demo (taruhan virtual flat 10 per ronde).</li>
+        <li><b>Statistik &amp; Pola</b> = ringkasan deskriptif dari riwayat yang terkumpul. Menggambarkan masa lalu, bukan masa depan.</li>
+      </ul>
+    </section>
   </div>
 </section>
 <section class="web55" aria-label="Situs 55five">
@@ -136,14 +250,23 @@ function kategori(num){
   return num <= 4 ? "Kecil" : "Besar";
 }
 
-// Strategi prediksi "pola mirip riwayat" (pengganti Math.random):
+// Pemetaan warna terverifikasi: 1,3,7,9 hijau; 2,4,6,8 merah; 0 merah+ungu; 5 hijau+ungu
+function warnaDigit(h){
+  if(h === 0) return ["merah", "ungu"];
+  if(h === 5) return ["hijau", "ungu"];
+  return [1, 3, 7, 9].includes(h) ? ["hijau"] : ["merah"];
+}
+const WARNA_DOT = { hijau: "hijau", merah: "merah", ungu: "ungu" };
+
+// Strategi prediksi "pola mirip riwayat":
 // Ambil 6 ronde terakhir sebagai pola query (urutan Besar/Kecil), cari segmen
 // riwayat lama yang polanya PERSIS sama, lalu ikuti hasil mayoritas dari
 // "ronde sesudah segmen-segmen itu". Kalau kecocokan < 3 atau seri,
 // fallback ke baseline mayoritas 30 ronde terakhir.
-// Catatan jujur: backtest walk-forward pada 922 ronde (8-13 Okt 2026)
-// menghasilkan akurasi 51,95% — secara statistik tidak beda dari lempar koin,
-// karena tiap ronde acak & independen. Scorecard sesi menampilkan akurasi riil.
+// Catatan jujur: backtest walk-forward multi-strategi pada 1.123 ronde
+// (8-14 Okt 2026) menghasilkan akurasi 47–51% untuk semua strategi —
+// secara statistik tidak beda dari lempar koin, karena tiap ronde acak &
+// independen. Scorecard sesi menampilkan akurasi riil.
 function prediksiPolaMirip(){
   const N = 6, MIN_MATCH = 3;
   const hist = semuaRiwayat(); // terbaru dulu
@@ -214,16 +337,18 @@ function tambahBaris(periode){
   tr.dataset.done = "0";
   const sp = strategiPrediksi();
   tr.dataset.prediksi = sp.prediksi;
-  tr.innerHTML = `
-    <td>${p}</td>
-    <td>${sp.prediksi} <span class="metode" title="${METODE_LABEL[sp.metode]}">${sp.metode}</span></td>
-    <td class="count">-</td>
-    <td class="hasil">-</td>
-    <td class="status">-</td>
-  `;
+  tr.dataset.metode = sp.metode;
+  tr.innerHTML =
+    "<td>" + p + "</td>" +
+    "<td>" + sp.prediksi + ' <span class="metode" title="' + METODE_LABEL[sp.metode] + '">' + sp.metode + "</span></td>" +
+    '<td class="count">-</td>' +
+    '<td class="hasil">-</td>' +
+    '<td class="status">-</td>';
   tbody.insertBefore(tr, tbody.firstChild);
   while(tbody.children.length > 30) tbody.removeChild(tbody.lastChild);
   currentRow = tr;
+  const lp = document.getElementById("livePeriode");
+  if(lp) lp.textContent = p;
 }
 
 function isiHasil(tr, hasil){
@@ -241,6 +366,7 @@ function isiHasil(tr, hasil){
     statusCell.className = "status lose";
   }
   updateScorecard();
+  updateMetode();
 }
 
 // Scorecard transparan: agregat hasil prediksi sesi ini + saldo demo (uang virtual).
@@ -260,6 +386,35 @@ function updateScorecard(){
   document.getElementById("scLose").textContent = lose;
   document.getElementById("scRate").textContent = total ? (100 * win / total).toFixed(1) + "%" : "–";
   document.getElementById("scSaldo").textContent = (SALDO_AWAL + BET * win - BET * lose).toLocaleString("id-ID");
+}
+
+// Kinerja per metode: tiap label metode dinilai terpisah dari hasil aslinya.
+function updateMetode(){
+  const agg = {};
+  document.querySelectorAll("#dataBody tr").forEach(tr => {
+    if(tr.dataset.done !== "1") return;
+    const m = tr.dataset.metode || "acak";
+    if(!agg[m]) agg[m] = { win: 0, lose: 0 };
+    const s = tr.querySelector(".status").innerText;
+    if(s === "WIN") agg[m].win++;
+    else if(s === "LOSE") agg[m].lose++;
+  });
+  const body = document.getElementById("methodBody");
+  const keys = Object.keys(agg);
+  if(!keys.length){
+    body.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">Belum ada ronde selesai.</td></tr>';
+    return;
+  }
+  const order = ["pola-6", "mayoritas-30", "mayoritas-all", "acak"];
+  keys.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  let html = "";
+  for(const m of keys){
+    const a = agg[m];
+    const total = a.win + a.lose;
+    const rate = total ? (100 * a.win / total).toFixed(1) + "%" : "–";
+    html += "<tr><td>" + m + "</td><td class=\"win\">" + a.win + "</td><td class=\"lose\">" + a.lose + "</td><td>" + rate + "</td></tr>";
+  }
+  body.innerHTML = html;
 }
 
 // cocokkan hasil dari API ke baris yang periodenya sesuai
@@ -289,6 +444,7 @@ async function cekData(){
 
 function mulaiCountdown(){
   clearInterval(timer);
+  const liveCount = document.getElementById("liveCount");
   timer = setInterval(() => {
     const now = new Date();
     const sec = now.getSeconds();
@@ -305,6 +461,7 @@ function mulaiCountdown(){
     }
     lastSisa = sisa;
 
+    if(liveCount) liveCount.textContent = sisa;
     if(currentRow){
       // tampilkan countdown; saat sisa=30 artinya baru mulai (30 detik penuh)
       currentRow.querySelector(".count").innerText = sisa;
@@ -317,22 +474,27 @@ function mulaiCountdown(){
   },1000);
 }
 
-/* ============ TAB PREDIKSI / STATISTIK ============ */
-const tabPrediksi = document.getElementById("tabPrediksi");
-const tabStatistik = document.getElementById("tabStatistik");
-const viewPrediksi = document.getElementById("viewPrediksi");
-const viewStatistik = document.getElementById("viewStatistik");
+/* ============ TAB PREDIKSI / STATISTIK / POLA / EDUKASI ============ */
+const TABS = [
+  ["tabPrediksi", "viewPrediksi", false],
+  ["tabStatistik", "viewStatistik", true],
+  ["tabPola", "viewPola", true],
+  ["tabEdukasi", "viewEdukasi", true]
+];
 const scoreBar = document.getElementById("scoreBar");
-function pilihTab(stat){
-  tabPrediksi.setAttribute("aria-selected", String(!stat));
-  tabStatistik.setAttribute("aria-selected", String(stat));
-  viewPrediksi.hidden = stat;
-  viewStatistik.hidden = !stat;
-  scoreBar.hidden = stat;
-  if(stat) renderStats();
+function pilihTab(id){
+  for(const [tid, vid, isAlt] of TABS){
+    const aktif = tid === id;
+    document.getElementById(tid).setAttribute("aria-selected", String(aktif));
+    document.getElementById(vid).hidden = !aktif;
+  }
+  scoreBar.hidden = id !== "tabPrediksi";
+  if(id === "tabStatistik") renderStats();
+  if(id === "tabPola") renderPola();
 }
-tabPrediksi.addEventListener("click", () => pilihTab(false));
-tabStatistik.addEventListener("click", () => pilihTab(true));
+for(const [tid] of TABS){
+  document.getElementById(tid).addEventListener("click", () => pilihTab(tid));
+}
 
 /* ============ RIWAYAT LOKAL (localStorage) ============ */
 const HIST_KEY = "five55_history_v1";
@@ -369,7 +531,8 @@ function gabungRiwayat(list, simpan=true){
 // Dipanggil tiap poll /api (2 detik): tambahkan hasil baru lalu render ulang statistik
 function simpanRiwayat(list){
   gabungRiwayat(list, true);
-  renderStats();
+  if(!document.getElementById("viewStatistik").hidden) renderStats();
+  if(!document.getElementById("viewPola").hidden) renderPola();
 }
 // Dipanggil sekali saat start: ambil ronde-ronde terbaru dari /api/history
 // (backend membatasi 10 ronde terakhir) lalu gabung ke riwayat lokal.
@@ -380,16 +543,16 @@ async function muatRiwayatAwal(){
     if(data && Array.isArray(data.list)){
       gabungRiwayat(data.list, true);
       renderStats();
+      renderPola();
     }
   }catch(e){ console.log("HISTORY ERROR:", e); }
 }
 
 /* ============ DATASET RIWAYAT BAWAAN (data/riwayat.json) ============ */
-// Snapshot hasil WinGo 30s (±922 ronde, 8–13 Okt 2026). DATA SEMENTARA —
-// diganti versi final pada 15 Okt 2026 (cukup timpa satu file ini).
-// Dipakai untuk: (1) mengisi tab Statistik saat pertama dibuka,
-// (2) baseline prediksi berbasis riwayat. Disimpan di memori saja,
-// tidak masuk localStorage; riwayat live dari /api tetap digabung di atasnya.
+// Riwayat hasil WinGo 30s (1.123 ronde unik, 8–14 Okt 2026; diperbarui otomatis
+// tiap 30 menit oleh GitHub Actions). Dipakai untuk: (1) mengisi tab Statistik
+// saat pertama dibuka, (2) baseline prediksi berbasis riwayat. Disimpan di
+// memori saja, tidak masuk localStorage; riwayat live dari /api digabung di atasnya.
 let datasetSeed = [];
 async function muatDatasetSeed(){
   try{
@@ -399,6 +562,7 @@ async function muatDatasetSeed(){
       datasetSeed = arr.filter(e => e && e.p && Number.isInteger(e.h) && e.h >= 0 && e.h <= 9);
       datasetSeed.sort((a, b) => (a.p < b.p ? 1 : -1)); // terbaru dulu
       renderStats();
+      renderPola();
     }
   }catch(e){ console.log("DATASET SEED ERROR:", e); }
 }
@@ -412,17 +576,32 @@ function semuaRiwayat(){
 }
 
 /* ============ STATISTIK DESKRIPTIF ============ */
-// Pemetaan warna terverifikasi: 1,3,7,9 hijau; 2,4,6,8 merah; 0 merah+ungu; 5 hijau+ungu
-function warnaDigit(h){
-  if(h === 0) return ["merah", "ungu"];
-  if(h === 5) return ["hijau", "ungu"];
-  return [1, 3, 7, 9].includes(h) ? ["hijau"] : ["merah"];
-}
 const BAR_COLORS = ["#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e"];
 let chartFreq = null;
+let statsRange = 0; // 0 = semua, atau 500 / 100 ronde terakhir
+
+function riwayatRentang(){
+  const h = semuaRiwayat();
+  return statsRange > 0 ? h.slice(0, statsRange) : h;
+}
+
+document.querySelectorAll(".range-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".range-btn").forEach(b => b.setAttribute("aria-pressed", "false"));
+    btn.setAttribute("aria-pressed", "true");
+    statsRange = parseInt(btn.dataset.range, 10) || 0;
+    renderStats();
+  });
+});
+
+function namaWarnaSingkat(h){
+  const w = warnaDigit(h);
+  if(w.length === 2) return w[0][0].toUpperCase() + "+" + w[1][0].toUpperCase();
+  return w[0][0].toUpperCase();
+}
 
 function renderStats(){
-  const hist = semuaRiwayat();
+  const hist = riwayatRentang();
   const meta = document.getElementById("statsMeta");
   const n = hist.length;
   if(!n){
@@ -441,7 +620,8 @@ function renderStats(){
   const pct = (x) => (100 * x / n).toFixed(1) + "%";
   const now = new Date();
   const jam = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + ":" + String(now.getSeconds()).padStart(2, "0");
-  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde riwayat · diperbarui " + jam;
+  const rentangLbl = statsRange > 0 ? statsRange + " ronde terakhir" : "seluruh riwayat";
+  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde (" + rentangLbl + ") · diperbarui " + jam;
 
   document.getElementById("bkBesarNum").textContent = besar;
   document.getElementById("bkBesarPct").textContent = pct(besar);
@@ -468,6 +648,16 @@ function renderStats(){
   document.getElementById("streakNow").textContent = kat(hist[0]) + " ×" + curLen;
   document.getElementById("streakBesarMax").textContent = "×" + maxB;
   document.getElementById("streakKecilMax").textContent = "×" + maxK;
+
+  // 30 ronde terakhir (terbaru dulu)
+  let recentHtml = "";
+  const recent = hist.slice(0, 30);
+  for(const e of recent){
+    const k = kat(e);
+    const dots = warnaDigit(e.h).map(w => '<span class="dot ' + WARNA_DOT[w] + '"></span>').join("");
+    recentHtml += "<tr><td>" + e.p + "</td><td><b>" + e.h + "</b></td><td>" + (k === "Besar" ? "B" : "K") + "</td><td>" + dots + "</td></tr>";
+  }
+  document.getElementById("recentBody").innerHTML = recentHtml;
 
   // Grafik frekuensi (Chart.js); garis putus-putus = ekspektasi seragam n/10
   if(!window.Chart){
@@ -523,7 +713,73 @@ function renderStats(){
     chartFreq.update();
   }
 }
-window.addEventListener("load", () => renderStats());
+
+/* ============ TAB POLA (indikator deskriptif, bukan sinyal) ============ */
+function renderPola(){
+  const hist = semuaRiwayat(); // terbaru dulu
+  const meta = document.getElementById("polaMeta");
+  const n = hist.length;
+  if(!n){
+    meta.textContent = "Belum ada riwayat tersimpan di perangkat ini.";
+    return;
+  }
+  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde riwayat.";
+  const kat = e => (e.h >= 5 ? "Besar" : "Kecil");
+
+  // Strip 20 ronde terakhir (lama -> baru)
+  const strip = hist.slice(0, 20).reverse();
+  let stripHtml = "";
+  for(const e of strip){
+    const k = kat(e) === "Besar" ? "B" : "K";
+    stripHtml += '<span class="pip ' + k + '" title="Periode ' + e.p + '">' + e.h + "</span>";
+  }
+  document.getElementById("polaStrip").innerHTML = stripHtml;
+
+  // Streak berjalan
+  let curLen = 1;
+  for(let i = 1; i < n; i++){
+    if(kat(hist[i]) === kat(hist[0])) curLen++;
+    else break;
+  }
+  document.getElementById("polaStreak").textContent = kat(hist[0]) + " ×" + curLen;
+
+  // Dragon terakhir: run >= 4 dalam 100 ronde terakhir
+  const w = hist.slice(0, 100);
+  let dragon = null, rl = 0, rc = null;
+  for(let i = 0; i < w.length; i++){
+    const c = kat(w[i]);
+    if(c === rc){ rl++; } else { rc = c; rl = 1; }
+    if(rl >= 4 && !dragon){
+      dragon = { kat: c, len: rl, lalu: i - rl + 1 };
+    }
+  }
+  // panjangkan dragon yang sedang berjalan sampai ujung run-nya
+  if(dragon && dragon.lalu === 0){
+    let extra = dragon.len;
+    for(let i = dragon.len; i < w.length && kat(w[i]) === dragon.kat; i++) extra++;
+    dragon.len = extra;
+  }
+  document.getElementById("polaDragon").textContent =
+    dragon ? dragon.kat + " ×" + dragon.len + (dragon.lalu > 0 ? " (" + dragon.lalu + " ronde lalu)" : " (berjalan)") : "tidak ada";
+
+  // ABAB: selang-seling sempurna dalam 10 ronde terakhir?
+  const t = hist.slice(0, 10);
+  let abab = t.length === 10;
+  for(let i = 1; i < t.length && abab; i++){
+    if(kat(t[i]) === kat(t[i - 1])) abab = false;
+  }
+  // run selang-seling terpanjang dalam 20 ronde terakhir
+  let best = 1, cur = 1;
+  const u = hist.slice(0, 20);
+  for(let i = 1; i < u.length; i++){
+    if(kat(u[i]) !== kat(u[i - 1])) cur++;
+    else cur = 1;
+    if(cur > best) best = cur;
+  }
+  document.getElementById("polaAbab").textContent = abab ? "Ya, 10/10" : "Tidak (maks ×" + best + ")";
+}
+
+window.addEventListener("load", () => { renderStats(); renderPola(); });
 
 async function start(){
   const data = await ambilAPI();

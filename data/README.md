@@ -4,7 +4,7 @@ Riwayat hasil **Win Go 30s** (55five). Awalnya snapshot studi pola 8–15 Okt 20
 kini **diperbarui otomatis** oleh GitHub Actions
 (`.github/workflows/update-riwayat.yml`, tiap 30 menit) — tanpa perlu membuka web.
 
-- **Jumlah:** bertambah otomatis (awal: 922 ronde unik, 8–13 Okt 2026)
+- **Jumlah:** bertambah otomatis (1.123 ronde unik per 14 Okt 2026, 8–14 Okt 2026)
 - **Sumber:** backend 55five langsung (tiap run menangkap 10 ronde terbaru —
   backend hanya mengembalikan itu; jadi file ini sampel segar, bukan semua ronde)
 - **Format:** array JSON compact `[{ "p": "<periode penuh>", "h": <angka 0–9> }]` — sama dengan format riwayat `localStorage` di aplikasi
