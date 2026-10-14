@@ -27,6 +27,37 @@ async function mockData(page, getData = () => snapshot()) {
   await page.route('**/api', (route) => route.fulfill({ json: getData() }));
 }
 
+test('archive refreshes every 30 minutes and retains data on a failed refresh', async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date() });
+  let archive = [{ p: id(1), h: 1 }];
+  let fail = false;
+  let requests = 0;
+  await page.route('**/data/riwayat.json', (route) => {
+    requests++;
+    return fail ? route.fulfill({ status: 503 }) : route.fulfill({ json: archive });
+  });
+  await mockData(page);
+  await page.goto('/');
+  await expect(page.locator('#connectionText')).toHaveText('Terhubung');
+  await page.getByRole('tab', { name: 'Pola', exact: true }).click();
+  await expect(page.locator('#patternMeta')).toContainText('11 hasil');
+  archive = [...archive, { p: id(2), h: 2 }];
+  await page.clock.fastForward(30 * 60 * 1000);
+  await expect(page.locator('#patternMeta')).toContainText('12 hasil');
+  fail = true;
+  await page.clock.fastForward(30 * 60 * 1000);
+  await expect(page.locator('#seedNotice')).toBeVisible();
+  await expect(page.locator('#patternMeta')).toContainText('12 hasil');
+  fail = false;
+  archive = [...archive, { p: id(3), h: 3 }];
+  await page.clock.fastForward(30 * 60 * 1000);
+  await expect(page.locator('#patternMeta')).toContainText('13 hasil');
+  await expect(page.locator('#seedNotice')).toBeHidden();
+  expect(requests).toBe(4);
+});
+
 test('a repeated provider period does not restart the countdown', async ({ page }) => {
   await page.clock.install({ time: new Date() });
   await mockData(page);

@@ -83,6 +83,8 @@ Uji memakai warmup 100, seed acak tetap 20261014, dan hanya hasil sebelum ronde 
 
 ## Kolektor arsip
 
+Dashboard memuat ulang arsip setiap 30 menit. Jika pembaruan gagal, arsip terakhir tetap tersedia; pemberitahuan otomatis hilang setelah pembaruan berikutnya berhasil.
+
 Workflow `.github/workflows/update-riwayat.yml` mempertahankan jadwal setiap 30 menit dan pemicu manual. Kolektor memakai validasi/timeout API yang sama, menolak menimpa dataset yang invalid, melakukan deduplikasi, lalu menulis file secara atomik. Override akses kolektor tersedia lewat GitHub Actions secret `FIVE55_HISTORY_BODY`.
 
 Arsip bertambah dalam Git, bukan dalam browser. Workflow hanya mengubah file bila ada ID baru. Perubahan dari bot dapat memicu deployment sesuai konfigurasi integrasi hosting; jadwal tidak menjamin semua ronde terkumpul. Jadwal dijalankan GitHub pada default branch setelah perubahan digabung.

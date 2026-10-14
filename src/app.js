@@ -266,21 +266,26 @@ setupBacktest(allHistory, toast);
 renderSession(session);
 drawData();
 setInterval(tick, 250);
-try {
-  const response = await fetch('/data/riwayat.json', {
-    signal: AbortSignal.timeout(5000),
-    cache: 'no-cache',
-  });
-  if (!response.ok) throw new Error('Archive unavailable');
-  const archive = await response.json();
-  if (!Array.isArray(archive)) throw new Error('Invalid archive');
-  seedHistory = mergeHistory(archive, [], Infinity);
-  drawData();
-} catch {
-  text(
-    'seedNotice',
-    'Arsip awal belum tersedia. Riwayat lokal dan pembaruan langsung tetap dapat digunakan.',
-  );
-  $('seedNotice').hidden = false;
+async function refreshArchive() {
+  try {
+    const response = await fetch('/data/riwayat.json', {
+      signal: AbortSignal.timeout(5000),
+      cache: 'no-cache',
+    });
+    if (!response.ok) throw new Error('Archive unavailable');
+    const archive = await response.json();
+    if (!Array.isArray(archive)) throw new Error('Invalid archive');
+    seedHistory = mergeHistory(archive, [], Infinity);
+    $('seedNotice').hidden = true;
+    drawData();
+  } catch {
+    text(
+      'seedNotice',
+      'Arsip belum dapat diperbarui. Data tersimpan dan pembaruan langsung tetap dapat digunakan.',
+    );
+    $('seedNotice').hidden = false;
+  }
 }
+await refreshArchive();
+setInterval(refreshArchive, 30 * 60 * 1000);
 syncPolling();

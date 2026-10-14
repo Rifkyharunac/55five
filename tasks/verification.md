@@ -13,4 +13,8 @@ Pemeriksaan lokal selesai pada 15 Oktober 2026. Ini bukan pernyataan deployment 
 
 ## Batas verifikasi
 
+### Integrasi konflik PR #4
+
+Perubahan `main` hingga `d08db24` diintegrasikan, termasuk arsip terbaru dan penyegaran arsip setiap 30 menit dari PR #5. Tes browser tambahan memverifikasi penyegaran berkala, retensi data saat gagal, dan pemulihan pemberitahuan. Pemulihan startup tetap menggunakan polling dengan backoff yang sudah diuji.
+
 Provider eksternal dan tanda tangannya dapat berubah. Override JSON tervalidasi tersedia; signature baru tidak direkayasa. Arsip historis memiliki jeda, sehingga indikator menjelaskan sampel tersimpan dan tidak menjanjikan akurasi. CI dan workflow pengumpul disiapkan; keberhasilan eksekusi GitHub serta deployment Vercel harus dinilai dari run masing-masing. Pengujian browser lokal memakai Chromium, bukan seluruh browser/perangkat.
