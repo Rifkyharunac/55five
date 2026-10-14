@@ -239,6 +239,7 @@ iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
   <div class="web-heading"><span>Situs 55five</span><a href="https://55x4mqd.com/#/home/" target="_blank" rel="noopener noreferrer">Buka penuh ↗</a></div>
   <iframe title="Situs 55five" src="https://55x4mqd.com/#/home/"></iframe>
 </section>
+<!-- overhaul-round2: ketahanan start (retry /api) + refresh seed tiap 30 menit -->
 <script>
 
 let currentRow = null;
@@ -549,10 +550,10 @@ async function muatRiwayatAwal(){
 }
 
 /* ============ DATASET RIWAYAT BAWAAN (data/riwayat.json) ============ */
-// Riwayat hasil WinGo 30s (1.123 ronde unik, 8–14 Okt 2026; diperbarui otomatis
-// tiap 30 menit oleh GitHub Actions). Dipakai untuk: (1) mengisi tab Statistik
-// saat pertama dibuka, (2) baseline prediksi berbasis riwayat. Disimpan di
-// memori saja, tidak masuk localStorage; riwayat live dari /api digabung di atasnya.
+// Riwayat hasil WinGo 30s (diperbarui otomatis tiap 30 menit oleh GitHub
+// Actions). Dipakai untuk: (1) mengisi tab Statistik saat pertama dibuka,
+// (2) baseline prediksi berbasis riwayat. Disimpan di memori saja, tidak masuk
+// localStorage; riwayat live dari /api digabung di atasnya.
 let datasetSeed = [];
 async function muatDatasetSeed(){
   try{
@@ -566,6 +567,11 @@ async function muatDatasetSeed(){
     }
   }catch(e){ console.log("DATASET SEED ERROR:", e); }
 }
+// Segarkan seed berkala mengikuti irama GitHub Actions (30 menit): halaman yang
+// dibuka lama ikut mendapat ronde-ronde baru tanpa reload. Gagal fetch =
+// seed lama dipertahankan, tidak ada yang rusak.
+const SEED_REFRESH_MS = 30 * 60 * 1000; // overhaul-round2
+setInterval(muatDatasetSeed, SEED_REFRESH_MS);
 // Riwayat gabungan: live (localStorage) + seed, dedupe per periode, terbaru dulu
 function semuaRiwayat(){
   const live = bacaRiwayat();
@@ -782,10 +788,20 @@ function renderPola(){
 window.addEventListener("load", () => { renderStats(); renderPola(); });
 
 async function start(){
-  const data = await ambilAPI();
-  if(!data || data.error) return;
+  // Statistik & Pola tetap berguna walau /api sedang tidak terjangkau,
+  // jadi seed dimuat duluan tanpa menunggu API.
+  muatDatasetSeed();
+  // /api kadang gagal saat cold start Vercel / gangguan sesaat — coba ulang
+  // dengan jeda bertambah sebelum menyerah, supaya panel tidak mati total.
+  let data = null;
+  for(let i = 0; i < 6; i++){
+    data = await ambilAPI();
+    if(data && !data.error) break;
+    data = null;
+    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+  }
+  if(!data) return; // /api tetap tak terjangkau; statistik dari seed tetap tampil
   lastPeriode = parseInt(data.periode, 10);
-  await muatDatasetSeed(); // seed dulu agar prediksi & statistik pakai riwayat
   tambahBaris(lastPeriode);
   cocokkanHasil(data.list);
   muatRiwayatAwal();
