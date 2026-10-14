@@ -1,18 +1,9 @@
-# data/riwayat.json
+# Arsip hasil 55FIVE
 
-Riwayat hasil **Win Go 30s** (55five). Awalnya snapshot studi pola 8–15 Okt 2026,
-kini **diperbarui otomatis** oleh GitHub Actions
-(`.github/workflows/update-riwayat.yml`, tiap 30 menit) — tanpa perlu membuka web.
+`riwayat.json` berisi hasil observasi dalam format JSON compact `[{"p":"<ID lengkap>","h":0}]`, diurutkan kronologis. Angka hasil harus bilangan bulat 0–9 dan ID disimpan sebagai teks.
 
-- **Jumlah:** bertambah otomatis (1.123 ronde unik per 14 Okt 2026, 8–14 Okt 2026)
-- **Sumber:** backend 55five langsung (tiap run menangkap 10 ronde terbaru —
-  backend hanya mengembalikan itu; jadi file ini sampel segar, bukan semua ronde)
-- **Format:** array JSON compact `[{ "p": "<periode penuh>", "h": <angka 0–9> }]` — sama dengan format riwayat `localStorage` di aplikasi
-- **Status:** data live yang terus diperbarui; tidak perlu lagi ditimpa manual
-  pada 15 Okt 2026 (dataset studi terpisah tetap dipakai untuk laporan final)
+Dataset awal berasal dari studi pada Oktober 2026 dan terus diperbarui oleh `.github/workflows/update-riwayat.yml` setiap 30 menit. Setiap pengambilan mendapat sekitar 10 hasil terbaru: arsip adalah **sampel dengan celah**, bukan rekaman lengkap setiap ronde. Jumlah dan rentang aktual dapat diperiksa langsung dari file; tidak ada jumlah tetap yang dijanjikan.
 
-Dipakai aplikasi untuk:
-1. Mengisi tab **Statistik** saat pertama dibuka (tanpa menunggu riwayat menumpuk).
-2. Baseline prediksi **berbasis riwayat** (strategi pola mirip riwayat +
-   fallback mayoritas 30 ronde terakhir) pengganti `Math.random()`.
-   Akurasi riilnya tetap tampil transparan di scorecard sesi — tiap ronde tetap acak & independen.
+Frontend memuat arsip ini ke memori untuk statistik, pola, metode simulasi, dan backtest. Riwayat browser dibatasi 500 hasil dan digabung tanpa duplikasi dengan arsip; kunci browser lama tetap dipertahankan. Data yang tidak valid tidak masuk perhitungan.
+
+Jalankan `node backtest-pola.js data/riwayat.json` untuk perbandingan walk-forward yang dapat diulang. Hasil backtest adalah evaluasi sampel historis, bukan jaminan ronde mendatang.

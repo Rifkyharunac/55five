@@ -1,0 +1,92 @@
+.method-details {
+  border-top: 1px solid var(--line);
+}
+.method-details summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 24px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.method-details > p {
+  padding: 0 24px 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.method-details summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -4px;
+}
+.pattern-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.pattern-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 32px;
+  padding: 4px 7px;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.pattern-chip.big {
+  color: var(--positive);
+  background: var(--accent-soft);
+}
+.pattern-chip.small {
+  color: var(--negative);
+  background: var(--negative-soft);
+}
+.pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.pattern-grid .streak-value {
+  font-size: 17px;
+}
+.backtest-section {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 16px;
+}
+.education-content {
+  padding: 0 24px 24px;
+}
+.education-content section + section {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.education-content h3 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.education-content p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.9;
+}
+.education-content table {
+  margin: 16px 0;
+}
+@media (max-width: 600px) {
+  .pattern-grid {
+    grid-template-columns: 1fr;
+  }
+  .education-content {
+    padding: 0 16px 20px;
+  }
+  .method-details summary {
+    padding: 12px 16px;
+  }
+  .method-details > p {
+    padding: 0 16px 16px;
+  }
+}

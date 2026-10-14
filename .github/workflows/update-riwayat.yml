@@ -1,33 +1,35 @@
-# Auto-update dataset riwayat Win Go 30s.
-# Frontend hanya mengambil data saat halaman dibuka, jadi dataset di repo
-# diperbarui dari server lewat workflow ini — tanpa perlu ada yang membuka web.
-# Jadwal tiap 30 menit: aman terhadap limit deploy Vercel (maks ~48 deploy/hari),
-# dan backend hanya mengembalikan 10 ronde terakhir per panggilan, jadi tiap run
-# menangkap ~10 ronde terbaru (sampel, bukan semua ronde).
-# Bisa juga dijalankan manual dari tab Actions (workflow_dispatch).
-
+# Periodic collection preserves the existing 30-minute sample schedule.
 name: Update riwayat otomatis
-
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: '*/30 * * * *'
   workflow_dispatch:
-
 permissions:
   contents: write
-
+concurrency:
+  group: update-riwayat
+  cancel-in-progress: false
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: '24'
       - run: node .github/workflows/update-riwayat.mjs
+        env:
+          FIVE55_HISTORY_BODY: ${{ secrets.FIVE55_HISTORY_BODY }}
       - name: Commit bila ada ronde baru
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/riwayat.json
-          git diff --cached --quiet && echo "Tidak ada ronde baru." || (git commit -m "Auto-update data/riwayat.json" && git push)
+          if git diff --cached --quiet; then
+            echo 'Tidak ada ronde baru.'
+          else
+            git commit -m 'Auto-update data/riwayat.json'
+            git pull --rebase
+            git push
+          fi
