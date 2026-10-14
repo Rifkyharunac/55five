@@ -1,454 +1,385 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
-<title>55FIVE • Panel Prediksi</title>
-<style>
-:root{color-scheme:dark;--bg:#0b1220;--panel:#111c2e;--line:#26354a;--text:#edf3fb;--muted:#a8b7cb;--accent:#6de4ce}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;height:100vh;height:100dvh;padding:12px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-rows:clamp(320px,45vh,480px) minmax(0,1fr);gap:12px;overflow:hidden}
-.panel,.web55{min-width:0;min-height:0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;box-shadow:0 8px 28px #0002}
-.panel{display:flex;flex-direction:column}
-.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex-shrink:0}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
-.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--accent);color:#102a28;font-size:17px;font-weight:850;flex-shrink:0}
-h1{font-size:16px;letter-spacing:.08em;margin:0;line-height:1.3}
-.subtitle{margin:3px 0 0;font-size:11px;color:var(--muted)}
-.period-label{font-size:11px;color:var(--accent);border:1px solid #6de4ce40;background:#6de4ce0b;padding:6px 10px;border-radius:999px;white-space:nowrap}
-.tabs{display:flex;gap:4px;margin:0 12px 10px;padding:4px;background:#0b1423;border:1px solid var(--line);border-radius:12px;flex-shrink:0}
-.tab-btn{flex:1;min-height:40px;min-width:0;padding:8px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
-.tab-btn[aria-selected="true"]{background:#20374a;color:var(--accent);box-shadow:0 1px 4px #0003}
-.tab-btn:hover{color:var(--text)}
-.tab-btn:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
-.scorebar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:0 12px 12px;flex-shrink:0;font-variant-numeric:tabular-nums}
-.scorebar>span{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-width:0;padding:8px 3px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:10px;font-weight:500;background:#0d1728}
-.scorebar b{font-size:15px;font-weight:750;color:var(--text);white-space:nowrap}.scorebar .win b{color:#75edb2}.scorebar .lose b{color:#ff9ba4}.scorebar .saldo b{color:#ffd479}
-.table-scroll,.stats-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#415775 transparent}
-.table-scroll{border-top:1px solid var(--line)}
-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px;font-variant-numeric:tabular-nums;text-align:center}
-caption{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-th{position:sticky;top:0;z-index:1;background:#17243a;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:10px 4px;border-bottom:1px solid var(--line)}
-th:nth-child(1){width:23%}th:nth-child(2){width:21%}th:nth-child(3){width:14%}th:nth-child(4){width:24%}th:nth-child(5){width:18%}
-td{height:38px;padding:8px 4px;border-bottom:1px solid #26354a99;overflow-wrap:anywhere}
-tbody tr:nth-child(even){background:#ffffff03}tbody tr:first-child{background:#6de4ce08}tbody tr:first-child td:first-child{box-shadow:inset 3px 0 var(--accent)}
-td:first-child{font-weight:600;color:#c7d6e9}td:nth-child(2){font-weight:600}.count{color:var(--accent);font-weight:700}
-.win{color:#75edb2;font-weight:750}.lose{color:#ff9ba4;font-weight:750}td.win{background:#75edb20a}td.lose{background:#ff9ba40a}
-.empty-state{margin:0;padding:20px;text-align:center;color:var(--muted);font-size:13px}.table-scroll:has(tbody tr) .empty-state{display:none}
-.stats-scroll{padding:4px 16px 16px;border-top:1px solid var(--line)}
-.stats-meta{margin:12px 0 16px;font-size:12px;line-height:1.6;color:var(--muted)}.stats-meta b{color:var(--text)}
-.stats-block{margin:0 0 18px}.stats-block h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
-.chart-wrap{position:relative;height:200px;min-width:0}.chart-wrap:has(+.chart-fallback:not([hidden])){display:none}
-.bk-row,.color-row{display:flex;gap:8px}
-.bk-card,.color-card{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center;background:#0d1728;overflow-wrap:anywhere}
-.bk-card .num,.color-card .num{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.4}.bk-card .lbl,.color-card .lbl{font-size:11px;line-height:1.4;color:var(--muted);margin-top:4px}
-.bk-card.besar .num{color:#75edb2}.bk-card.kecil .num{color:#ff9ba4}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.dot.hijau{background:#22c55e}.dot.merah{background:#ef4444}.dot.ungu{background:#a855f7}
-.disclaimer{margin:4px 0 0;font-size:11px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
-.chart-fallback{color:var(--muted);font-size:12px;line-height:1.5;padding:12px;border:1px dashed var(--line);border-radius:8px;text-align:center}
-.web55{display:flex;flex-direction:column;background:#0d1625}
-.web-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;min-height:44px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);flex-shrink:0}
-a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
-iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
-@supports(height:100dvh){body{grid-template-rows:clamp(320px,45dvh,480px) minmax(0,1fr)}}
-@media(max-width:600px){body{padding:8px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom));gap:8px;grid-template-rows:clamp(310px,52vh,440px) minmax(0,1fr)}.panel,.web55{border-radius:12px}.panel-heading{padding:10px 12px;gap:8px}h1{font-size:15px}.brand-mark{width:30px;height:30px;font-size:15px}.tabs{margin:0 8px 8px}.scorebar{gap:4px;padding:0 8px 8px}.scorebar>span{padding:7px 2px;font-size:9px}.scorebar b{font-size:12px}table{font-size:12px}th{font-size:10px;padding:9px 3px;letter-spacing:0}td{padding:7px 3px;height:36px}.stats-scroll{padding:0 10px 12px}.chart-wrap{height:180px}.bk-card .num,.color-card .num{font-size:19px}.web-heading{padding:0 12px}}
-@supports(height:100dvh){@media(max-width:600px){body{grid-template-rows:clamp(310px,52dvh,440px) minmax(0,1fr)}}}
-@media(max-height:600px) and (min-width:680px){body{grid-template-columns:minmax(310px,42%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:6px;gap:6px}.panel-heading{padding:8px 12px}.tabs{margin:0 8px 8px}.scorebar{padding:0 8px 8px;gap:4px}.scorebar>span{font-size:9px}.scorebar b{font-size:12px}table{font-size:12px}.chart-wrap{height:160px}}
-@media(max-height:520px) and (max-width:679px){body{height:auto;min-height:100vh;min-height:100dvh;overflow:auto;grid-template-rows:310px max(200px,45vh)}.web55{min-height:200px}}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-</head>
-<body>
-<section class="panel" aria-labelledby="panel-title">
-  <header class="panel-heading">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">55</span><div><h1 id="panel-title">55FIVE</h1><p class="subtitle">Ringkasan periode &amp; hasil</p></div></div>
-    <span class="period-label">30 detik</span>
-  </header>
-  <nav class="tabs" role="tablist" aria-label="Tampilan panel">
-    <button class="tab-btn" id="tabPrediksi" role="tab" aria-selected="true" aria-controls="viewPrediksi">Prediksi</button>
-    <button class="tab-btn" id="tabStatistik" role="tab" aria-selected="false" aria-controls="viewStatistik">Statistik</button>
-  </nav>
-  <div class="scorebar" id="scoreBar" aria-label="Scorecard sesi">
-    <span>Total selesai<b id="scTotal">0</b></span>
-    <span class="win">WIN <b id="scWin">0</b></span>
-    <span class="lose">LOSE <b id="scLose">0</b></span>
-    <span>Akurasi<b id="scRate">–</b></span>
-    <span class="saldo" title="Uang virtual untuk edukasi">Saldo demo<b id="scSaldo">1.000</b></span>
-  </div>
-  <div class="table-scroll" id="viewPrediksi" role="tabpanel" aria-labelledby="tabPrediksi" tabindex="0" aria-label="Riwayat prediksi, dapat digulir">
-    <table>
-      <caption>Prediksi dan hasil tiap periode</caption>
-      <thead><tr><th scope="col">Periode</th><th scope="col">Prediksi</th><th scope="col">Sisa</th><th scope="col">Hasil</th><th scope="col">Status</th></tr></thead>
-      <tbody id="dataBody"></tbody>
-    </table>
-    <p class="empty-state">Menunggu data periode…</p>
-  </div>
-  <div class="stats-scroll" id="viewStatistik" role="tabpanel" aria-labelledby="tabStatistik" hidden>
-    <p class="stats-meta" id="statsMeta">Memuat riwayat…</p>
-    <section class="stats-block" aria-label="Frekuensi angka">
-      <h2>Frekuensi angka 0–9</h2>
-      <div class="chart-wrap"><canvas id="chartFreq" aria-label="Grafik batang frekuensi angka"></canvas></div>
-      <p class="chart-fallback" id="chartFallback" hidden>Grafik tidak dapat dimuat (CDN Chart.js tidak terjangkau). Data ringkas tetap tampil di bawah.</p>
-    </section>
-    <section class="stats-block" aria-label="Rasio Besar Kecil">
-      <h2>Besar / Kecil</h2>
-      <div class="bk-row">
-        <div class="bk-card besar"><div class="num" id="bkBesarNum">–</div><div class="lbl">Besar (5–9)</div><div class="lbl" id="bkBesarPct"></div></div>
-        <div class="bk-card kecil"><div class="num" id="bkKecilNum">–</div><div class="lbl">Kecil (0–4)</div><div class="lbl" id="bkKecilPct"></div></div>
+<!doctype html>
+<html lang="id" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101715" />
+    <meta
+      name="description"
+      content="Panel periode, riwayat hasil, statistik deskriptif, dan simulasi acak 55FIVE."
+    />
+    <title>55FIVE — Dashboard periode & hasil</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Lewati ke konten</a>
+    <header class="topbar">
+      <a href="/" class="brand" aria-label="55FIVE beranda"
+        ><span class="brand-mark">55</span
+        ><span>55FIVE<span class="brand-caption">PERIOD OBSERVATORY</span></span></a
+      >
+      <div class="top-actions">
+        <span class="session-label">Panel pribadi <span class="tiny-dot"></span></span
+        ><button
+          id="themeButton"
+          class="icon-button"
+          aria-label="Aktifkan tema terang"
+          title="Ganti tema"
+        >
+          ◐
+        </button>
       </div>
-    </section>
-    <section class="stats-block" aria-label="Streak">
-      <h2>Streak Besar / Kecil</h2>
-      <div class="bk-row">
-        <div class="bk-card"><div class="num" id="streakNow" style="font-size:19px">–</div><div class="lbl">Streak berjalan</div></div>
-        <div class="bk-card besar"><div class="num" id="streakBesarMax">–</div><div class="lbl">Terpanjang Besar</div></div>
-        <div class="bk-card kecil"><div class="num" id="streakKecilMax">–</div><div class="lbl">Terpanjang Kecil</div></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">WINGO / 30 DETIK</p>
+          <h1>Setiap periode, lebih jelas.</h1>
+          <p class="muted intro">Hasil terbaru, riwayat, dan statistik dalam satu tempat.</p>
+        </div>
+        <div class="heading-actions">
+          <span class="connection" id="connection" data-state="loading" role="status"
+            ><span class="status-dot"></span><span id="connectionText">Menghubungkan</span></span
+          ><button class="button" id="refreshButton">
+            <span aria-hidden="true">↻</span> Perbarui
+          </button>
+        </div>
       </div>
-    </section>
-    <section class="stats-block" aria-label="Distribusi warna">
-      <h2>Distribusi warna</h2>
-      <div class="color-row">
-        <div class="color-card"><div class="num" id="colHijau">–</div><div class="lbl"><span class="dot hijau"></span>Hijau</div></div>
-        <div class="color-card"><div class="num" id="colMerah">–</div><div class="lbl"><span class="dot merah"></span>Merah</div></div>
-        <div class="color-card"><div class="num" id="colUngu">–</div><div class="lbl"><span class="dot ungu"></span>Ungu</div></div>
+      <div class="notice" id="networkNotice" role="status" hidden></div>
+      <div class="notice" id="storageNotice" role="status" hidden></div>
+      <div class="workspace">
+        <div class="primary-column">
+          <section class="period-card" aria-labelledby="periodTitle">
+            <div class="period-main">
+              <div class="section-label">
+                <span class="tiny-dot"></span>
+                <h2 id="periodTitle">Periode aktif</h2>
+                <span class="pill">30s</span>
+              </div>
+              <div class="period-number" id="activePeriod">— — — — —</div>
+              <p class="period-full" id="fullIssue">Menunggu konfirmasi penyedia</p>
+              <p class="period-caption" id="periodCaption">Periode mengikuti data server.</p>
+            </div>
+            <div class="countdown-block">
+              <span class="eyebrow">PERGANTIAN BERIKUTNYA</span>
+              <div class="countdown">
+                <span id="countdown">—</span><span class="countdown-unit">detik</span>
+              </div>
+              <progress
+                id="countdownProgress"
+                max="30"
+                value="0"
+                aria-label="Sisa waktu periode"
+              ></progress>
+              <p id="countdownNote">Menyinkronkan waktu</p>
+            </div>
+          </section>
+          <section class="score-grid" aria-label="Ringkasan simulasi sesi tab ini">
+            <article class="score">
+              <span class="score-label">Ronde selesai <span aria-hidden="true">↗</span></span
+              ><strong id="scTotal">0</strong
+              ><span class="score-detail"
+                ><span class="positive" id="scWin">0 WIN</span><span class="separator">/</span
+                ><span class="negative" id="scLose">0 LOSE</span></span
+              >
+            </article>
+            <article class="score">
+              <span class="score-label">Akurasi simulasi <span aria-hidden="true">◎</span></span
+              ><strong id="scRate">—</strong
+              ><span class="score-detail">Dari hasil yang terkonfirmasi</span>
+            </article>
+            <article class="score">
+              <span class="score-label">Saldo demo <span aria-hidden="true">◇</span></span
+              ><strong id="scSaldo">1.000</strong
+              ><span class="score-detail">Poin virtual · 10 poin / ronde</span>
+            </article>
+          </section>
+          <section class="data-panel" aria-label="Data dan analisis">
+            <div class="panel-tabs" role="tablist" aria-label="Tampilan data">
+              <button
+                id="tab-session"
+                role="tab"
+                aria-selected="true"
+                aria-controls="view-session"
+                tabindex="0"
+              >
+                Simulasi sesi
+              </button>
+              <button
+                id="tab-history"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-history"
+                tabindex="-1"
+              >
+                Riwayat hasil
+              </button>
+              <button
+                id="tab-stats"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-stats"
+                tabindex="-1"
+              >
+                Statistik
+              </button>
+            </div>
+            <div id="view-session" role="tabpanel" aria-labelledby="tab-session" tabindex="0">
+              <div class="panel-toolbar">
+                <div>
+                  <h2>Catatan simulasi</h2>
+                  <p id="sessionMeta">Sesi tab ini · tersimpan saat dimuat ulang</p>
+                </div>
+                <button id="resetButton" class="text-button">Mulai sesi baru ↗</button>
+              </div>
+              <div
+                class="table-scroll"
+                tabindex="0"
+                role="region"
+                aria-label="Tabel simulasi, dapat digulir"
+              >
+                <table>
+                  <caption>
+                    Simulasi acak dan hasil per periode, 30 baris terbaru
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Periode</th>
+                      <th scope="col">Simulasi acak</th>
+                      <th scope="col">Hasil</th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sessionBody"></tbody>
+                </table>
+              </div>
+              <div class="empty-state" id="sessionEmpty">
+                <span class="empty-symbol" aria-hidden="true">◎</span>
+                <h3>Menunggu periode aktif</h3>
+                <p>Simulasi dimulai setelah data dan waktu server terkonfirmasi.</p>
+              </div>
+              <div class="panel-footer">
+                <span><span class="tiny-dot"></span> Simulasi acak, bukan rekomendasi</span
+                ><span id="sessionCount">0 catatan</span>
+              </div>
+            </div>
+            <div
+              id="view-history"
+              role="tabpanel"
+              aria-labelledby="tab-history"
+              tabindex="0"
+              hidden
+            >
+              <div class="panel-toolbar">
+                <div>
+                  <h2>Riwayat hasil</h2>
+                  <p>Maksimal 500 hasil tersimpan di perangkat ini.</p>
+                </div>
+                <button id="exportButton" class="button small" disabled>↓ Ekspor CSV</button>
+              </div>
+              <div class="filters">
+                <label
+                  >Cari periode<input
+                    id="searchInput"
+                    type="search"
+                    placeholder="Nomor periode…"
+                    inputmode="numeric"
+                    maxlength="32" /></label
+                ><label
+                  >Kategori<select id="categoryFilter" aria-label="Kategori">
+                    <option value="">Semua kategori</option>
+                    <option>Besar</option>
+                    <option>Kecil</option>
+                  </select></label
+                ><label
+                  >Jumlah<select id="historyLimit" aria-label="Jumlah hasil">
+                    <option value="30">30 terakhir</option>
+                    <option value="100">100 terakhir</option>
+                    <option value="500">500 terakhir</option>
+                  </select></label
+                >
+              </div>
+              <div
+                class="table-scroll history-scroll"
+                tabindex="0"
+                role="region"
+                aria-label="Tabel riwayat, dapat digulir"
+              >
+                <table>
+                  <caption>
+                    Riwayat hasil sesuai filter
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Periode lengkap</th>
+                      <th scope="col">Angka</th>
+                      <th scope="col">Kategori</th>
+                      <th scope="col">Warna</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyBody"></tbody>
+                </table>
+              </div>
+              <div class="empty-state" id="historyEmpty">
+                <span class="empty-symbol" aria-hidden="true">≡</span>
+                <h3>Belum ada hasil</h3>
+                <p>Hasil akan tersedia setelah layanan terhubung.</p>
+              </div>
+              <div class="panel-footer">
+                <span id="historyCount" role="status">0 hasil</span
+                ><span>Ekspor mengikuti filter</span>
+              </div>
+            </div>
+            <div id="view-stats" role="tabpanel" aria-labelledby="tab-stats" tabindex="0" hidden>
+              <div class="panel-toolbar">
+                <div>
+                  <h2>Angka di balik riwayat</h2>
+                  <p id="statsMeta">Belum ada data untuk dianalisis.</p>
+                </div>
+                <label class="inline-label"
+                  >Sampel<select id="statsLimit" aria-label="Sampel statistik">
+                    <option value="30">30 ronde</option>
+                    <option value="100">100 ronde</option>
+                    <option value="500" selected>500 ronde</option>
+                  </select></label
+                >
+              </div>
+              <div class="stats-content">
+                <section aria-labelledby="frequencyTitle">
+                  <div class="subheading">
+                    <h3 id="frequencyTitle">Frekuensi angka</h3>
+                    <span>Jumlah kemunculan</span>
+                  </div>
+                  <div
+                    class="frequency-chart"
+                    id="frequencyChart"
+                    aria-label="Frekuensi angka nol sampai sembilan"
+                  ></div>
+                  <p class="chart-note">Angka 0 dan 5 juga termasuk warna ungu.</p>
+                </section>
+                <div class="stat-pair">
+                  <section class="stat-box">
+                    <h3>Besar &amp; kecil</h3>
+                    <div class="ratio-values">
+                      <span>Besar <b id="bigValue">0</b></span
+                      ><span>Kecil <b id="smallValue">0</b></span>
+                    </div>
+                    <progress
+                      id="sizeRatio"
+                      max="100"
+                      value="0"
+                      aria-label="Persentase hasil besar"
+                    ></progress>
+                    <p id="ratioText">Belum ada sampel</p>
+                  </section>
+                  <section class="stat-box">
+                    <h3>Rangkaian hasil</h3>
+                    <strong class="streak-value" id="streakValue">—</strong>
+                    <p id="streakNote">Belum ada sampel</p>
+                  </section>
+                </div>
+                <section class="color-summary" aria-labelledby="colorTitle">
+                  <h3 id="colorTitle">Distribusi warna</h3>
+                  <div id="colorSummary"></div>
+                  <p class="chart-note">
+                    Satu hasil dapat memiliki dua warna; jumlah warna bisa melebihi jumlah ronde.
+                  </p>
+                </section>
+                <p class="analysis-note">
+                  Statistik menggambarkan hasil yang sudah terjadi. Setiap ronde acak dan
+                  independen; pola sebelumnya tidak memastikan hasil berikutnya.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+        <aside class="sidebar" aria-label="Konteks dan pengaturan">
+          <section class="side-panel">
+            <div class="side-heading">
+              <h2>Hasil terbaru</h2>
+              <span class="side-tag">10 RONDE</span>
+            </div>
+            <div id="recentResults" class="recent-results">
+              <p class="muted">Menunggu hasil terbaru…</p>
+            </div>
+            <div class="latest-caption">
+              <span>Hasil terakhir</span><strong id="lastResult">—</strong>
+            </div>
+            <p class="side-note" id="lastResultPeriod">Belum ada periode terkonfirmasi.</p>
+          </section>
+          <section class="side-panel">
+            <div class="side-heading">
+              <h2>Ruang kerja</h2>
+              <span aria-hidden="true">⚙</span>
+            </div>
+            <label class="switch-row" for="compactToggle"
+              ><span>Tampilan ringkas<small>Lebih banyak baris di layar</small></span
+              ><input id="compactToggle" type="checkbox" role="switch" /></label
+            ><button id="pauseButton" class="button full" aria-pressed="false">
+              Ⅱ Jeda pembaruan
+            </button>
+            <div class="update-info">
+              <span>Sinkronisasi terakhir</span><time id="lastUpdated">Belum tersinkron</time>
+            </div>
+          </section>
+          <section class="side-panel external-card">
+            <span class="eyebrow">AKSES SITUS</span>
+            <h2>Buka 55five</h2>
+            <p>Akses situs eksternal dalam panel atau di tab terpisah.</p>
+            <a
+              href="https://55x4mqd.com/#/home/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="button primary full"
+              >Buka situs <span aria-hidden="true">↗</span></a
+            ><button
+              id="embedButton"
+              class="text-button full"
+              aria-expanded="false"
+              aria-controls="externalPanel"
+            >
+              Tampilkan dalam panel
+            </button>
+          </section>
+          <div class="sidebar-footnote">
+            <span class="tiny-dot"></span>
+            <p>Data dari penyedia eksternal.<br />Riwayat tersimpan di browser Anda.</p>
+          </div>
+        </aside>
       </div>
-    </section>
-    <p class="disclaimer">Statistik deskriptif dari riwayat yang tersimpan di perangkat ini. Tiap ronde WinGo acak dan independen — data ini menggambarkan yang sudah terjadi, bukan ramalan hasil berikutnya.</p>
-  </div>
-</section>
-<section class="web55" aria-label="Situs 55five">
-  <div class="web-heading"><span>Situs 55five</span><a href="https://55x4mqd.com/#/home/" target="_blank" rel="noopener noreferrer">Buka penuh ↗</a></div>
-  <iframe title="Situs 55five" src="https://55x4mqd.com/#/home/"></iframe>
-</section>
-<script>
-
-let currentRow = null;
-let timer = null;
-let lastPeriode = null;   // periode berjalan (angka, mis. 51792)
-let lastSisa = null;
-
-function kategori(num){
-  return num <= 4 ? "Kecil" : "Besar";
-}
-
-function buatPrediksi(){
-  return Math.random() > 0.5 ? "Besar" : "Kecil";
-}
-
-async function ambilAPI(){
-  try{
-    const res = await fetch("/api?t=" + Date.now());
-    return await res.json();
-  }catch(e){
-    console.log("API ERROR:", e);
-    return null;
-  }
-}
-
-function tambahBaris(periode){
-  const tbody = document.getElementById("dataBody");
-  const p = String(periode);
-  if(tbody.firstChild && tbody.firstChild.dataset.periode === p) return; // cegah duplikat
-  const tr = document.createElement("tr");
-  tr.dataset.periode = p;
-  tr.dataset.done = "0";
-  tr.innerHTML = `
-    <td>${p}</td>
-    <td>${buatPrediksi()}</td>
-    <td class="count">-</td>
-    <td class="hasil">-</td>
-    <td class="status">-</td>
-  `;
-  tbody.insertBefore(tr, tbody.firstChild);
-  while(tbody.children.length > 30) tbody.removeChild(tbody.lastChild);
-  currentRow = tr;
-}
-
-function isiHasil(tr, hasil){
-  if(!tr || tr.dataset.done === "1") return;
-  tr.dataset.done = "1";
-  const kategoriHasil = kategori(hasil);
-  tr.querySelector(".hasil").innerText = kategoriHasil + " " + hasil;
-  const statusCell = tr.querySelector(".status");
-  const prediksi = tr.children[1].innerText;
-  if(prediksi === kategoriHasil){
-    statusCell.innerText = "WIN";
-    statusCell.className = "status win";
-  }else{
-    statusCell.innerText = "LOSE";
-    statusCell.className = "status lose";
-  }
-  updateScorecard();
-}
-
-// Scorecard transparan: agregat hasil prediksi sesi ini + saldo demo (uang virtual).
-// Taruhan demo flat 10 per ronde; menegaskan akurasi riil ≈ peluang acak.
-const SALDO_AWAL = 1000, BET = 10;
-function updateScorecard(){
-  let win = 0, lose = 0;
-  document.querySelectorAll("#dataBody tr").forEach(tr => {
-    if(tr.dataset.done !== "1") return;
-    const s = tr.querySelector(".status").innerText;
-    if(s === "WIN") win++;
-    else if(s === "LOSE") lose++;
-  });
-  const total = win + lose;
-  document.getElementById("scTotal").textContent = total;
-  document.getElementById("scWin").textContent = win;
-  document.getElementById("scLose").textContent = lose;
-  document.getElementById("scRate").textContent = total ? (100 * win / total).toFixed(1) + "%" : "–";
-  document.getElementById("scSaldo").textContent = (SALDO_AWAL + BET * win - BET * lose).toLocaleString("id-ID");
-}
-
-// cocokkan hasil dari API ke baris yang periodenya sesuai
-function cocokkanHasil(list){
-  if(!Array.isArray(list)) return;
-  document.querySelectorAll("#dataBody tr").forEach(tr => {
-    if(tr.dataset.done === "1") return;
-    const found = list.find(e => String(e.issueNumber).slice(-5) === tr.dataset.periode);
-    // gunakan found.hasil (sudah di-parse oleh API, digit terakhir yang benar)
-    if(found) isiHasil(tr, found.hasil);
-  });
-}
-
-async function cekData(){
-  const data = await ambilAPI();
-  if(!data || data.error) return;
-  cocokkanHasil(data.list);
-  simpanRiwayat(data.list);
-  // sinkronisasi periode dari API: hanya update bila API melaporkan periode LEBIH BARU
-  // (bukan sama dengan lastPeriode yang sudah di-increment lokal)
-  const apiP = parseInt(data.periode, 10);
-  if(!isNaN(apiP) && lastPeriode !== null && apiP > lastPeriode){
-    lastPeriode = apiP;
-    tambahBaris(apiP);
-  }
-}
-
-function mulaiCountdown(){
-  clearInterval(timer);
-  timer = setInterval(() => {
-    const now = new Date();
-    const sec = now.getSeconds();
-
-    // countdown sinkron 30 detik: sisa waktu sampai periode berikutnya
-    // sec=0  → sisa=30, sec=1 → sisa=29, ..., sec=29 → sisa=1
-    const sisa = 30 - (sec % 30);
-
-    // Deteksi pergantian periode: ketika lastSisa kecil (≤3) lalu tiba-tiba jadi 30
-    // Ini berarti countdown habis dan periode baru dimulai
-    if(lastSisa !== null && lastSisa <= 3 && sisa === 30 && lastPeriode !== null){
-      lastPeriode++;
-      tambahBaris(lastPeriode);
-    }
-    lastSisa = sisa;
-
-    if(currentRow){
-      // tampilkan countdown; saat sisa=30 artinya baru mulai (30 detik penuh)
-      currentRow.querySelector(".count").innerText = sisa;
-    }
-
-    // cek hasil tiap 2 detik
-    if(sec % 2 === 0){
-      cekData();
-    }
-  },1000);
-}
-
-/* ============ TAB PREDIKSI / STATISTIK ============ */
-const tabPrediksi = document.getElementById("tabPrediksi");
-const tabStatistik = document.getElementById("tabStatistik");
-const viewPrediksi = document.getElementById("viewPrediksi");
-const viewStatistik = document.getElementById("viewStatistik");
-const scoreBar = document.getElementById("scoreBar");
-function pilihTab(stat){
-  tabPrediksi.setAttribute("aria-selected", String(!stat));
-  tabStatistik.setAttribute("aria-selected", String(stat));
-  viewPrediksi.hidden = stat;
-  viewStatistik.hidden = !stat;
-  scoreBar.hidden = stat;
-  if(stat) renderStats();
-}
-tabPrediksi.addEventListener("click", () => pilihTab(false));
-tabStatistik.addEventListener("click", () => pilihTab(true));
-
-/* ============ RIWAYAT LOKAL (localStorage) ============ */
-const HIST_KEY = "five55_history_v1";
-const HIST_MAX = 500;
-
-function bacaRiwayat(){
-  try{
-    const raw = localStorage.getItem(HIST_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr.filter(e => e && e.p && Number.isInteger(e.h)) : [];
-  }catch(e){ return []; }
-}
-function tulisRiwayat(arr){
-  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr.slice(0, HIST_MAX))); }catch(e){}
-}
-// Gabungkan entri {issueNumber, hasil} ke riwayat (dedupe per periode)
-function gabungRiwayat(list, simpan=true){
-  if(!Array.isArray(list) || !list.length) return bacaRiwayat();
-  const hist = bacaRiwayat();
-  const ada = new Set(hist.map(e => e.p));
-  for(const e of list){
-    const p = String(e.issueNumber || "");
-    const h = Number.isInteger(e.hasil) ? e.hasil : parseInt(e.hasil, 10);
-    if(!p || !Number.isInteger(h) || h < 0 || h > 9 || ada.has(p)) continue;
-    ada.add(p);
-    hist.push({ p, h });
-  }
-  // urutkan terbaru dulu, batasi
-  hist.sort((a, b) => (a.p < b.p ? 1 : -1));
-  const potong = hist.slice(0, HIST_MAX);
-  if(simpan) tulisRiwayat(potong);
-  return potong;
-}
-// Dipanggil tiap poll /api (2 detik): tambahkan hasil baru lalu render ulang statistik
-function simpanRiwayat(list){
-  gabungRiwayat(list, true);
-  renderStats();
-}
-// Dipanggil sekali saat start: ambil bulk ~100 ronde dari /api/history
-async function muatRiwayatAwal(){
-  try{
-    const res = await fetch("/api/history?t=" + Date.now());
-    const data = await res.json();
-    if(data && Array.isArray(data.list)){
-      gabungRiwayat(data.list, true);
-      renderStats();
-    }
-  }catch(e){ console.log("HISTORY ERROR:", e); }
-}
-
-/* ============ STATISTIK DESKRIPTIF ============ */
-// Pemetaan warna terverifikasi: 1,3,7,9 hijau; 2,4,6,8 merah; 0 merah+ungu; 5 hijau+ungu
-function warnaDigit(h){
-  if(h === 0) return ["merah", "ungu"];
-  if(h === 5) return ["hijau", "ungu"];
-  return [1, 3, 7, 9].includes(h) ? ["hijau"] : ["merah"];
-}
-const BAR_COLORS = ["#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e","#ef4444","#22c55e"];
-let chartFreq = null;
-
-function renderStats(){
-  const hist = bacaRiwayat();
-  const meta = document.getElementById("statsMeta");
-  const n = hist.length;
-  if(!n){
-    meta.textContent = "Belum ada riwayat tersimpan di perangkat ini.";
-    return;
-  }
-  const freq = Array(10).fill(0);
-  let besar = 0;
-  const col = { hijau: 0, merah: 0, ungu: 0 };
-  for(const e of hist){
-    freq[e.h]++;
-    if(e.h >= 5) besar++;
-    for(const w of warnaDigit(e.h)) col[w]++;
-  }
-  const kecil = n - besar;
-  const pct = (x) => (100 * x / n).toFixed(1) + "%";
-  const now = new Date();
-  const jam = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + ":" + String(now.getSeconds()).padStart(2, "0");
-  meta.innerHTML = "Berdasarkan <b>" + n + "</b> ronde terakhir · diperbarui " + jam;
-
-  document.getElementById("bkBesarNum").textContent = besar;
-  document.getElementById("bkBesarPct").textContent = pct(besar);
-  document.getElementById("bkKecilNum").textContent = kecil;
-  document.getElementById("bkKecilPct").textContent = pct(kecil);
-  document.getElementById("colHijau").textContent = col.hijau;
-  document.getElementById("colMerah").textContent = col.merah;
-  document.getElementById("colUngu").textContent = col.ungu;
-
-  // Streak Besar/Kecil — hist urut terbaru dulu
-  const kat = e => (e.h >= 5 ? "Besar" : "Kecil");
-  let curLen = 1;
-  for(let i = 1; i < n; i++){
-    if(kat(hist[i]) === kat(hist[0])) curLen++;
-    else break;
-  }
-  let maxB = 0, maxK = 0, rl = 0, rc = null;
-  for(const e of hist){
-    const c = kat(e);
-    if(c === rc){ rl++; } else { rc = c; rl = 1; }
-    if(c === "Besar") maxB = Math.max(maxB, rl);
-    else maxK = Math.max(maxK, rl);
-  }
-  document.getElementById("streakNow").textContent = kat(hist[0]) + " ×" + curLen;
-  document.getElementById("streakBesarMax").textContent = "×" + maxB;
-  document.getElementById("streakKecilMax").textContent = "×" + maxK;
-
-  // Grafik frekuensi (Chart.js); garis putus-putus = ekspektasi seragam n/10
-  if(!window.Chart){
-    document.getElementById("chartFallback").hidden = false;
-    return;
-  }
-  document.getElementById("chartFallback").hidden = true;
-  const expected = n / 10;
-  const gridColor = "#26354a";
-  const tickColor = "#a8b7cb";
-  if(!chartFreq){
-    const ctx = document.getElementById("chartFreq").getContext("2d");
-    chartFreq = new Chart(ctx, {
-      data: {
-        labels: ["0","1","2","3","4","5","6","7","8","9"],
-        datasets: [
-          {
-            type: "bar",
-            label: "Frekuensi",
-            data: freq,
-            backgroundColor: BAR_COLORS,
-            borderRadius: 5,
-            borderSkipped: false
-          },
-          {
-            type: "line",
-            label: "Ekspektasi acak (n/10)",
-            data: Array(10).fill(expected),
-            borderColor: "#6de4ce",
-            borderDash: [6, 4],
-            borderWidth: 1.5,
-            pointRadius: 0,
-            fill: false
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: tickColor, boxWidth: 14, font: { size: 11 } } },
-          tooltip: { callbacks: { label: (c) => " " + c.dataset.label + ": " + c.parsed.y } }
-        },
-        scales: {
-          x: { grid: { color: gridColor }, ticks: { color: tickColor } },
-          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: tickColor, precision: 0 } }
-        }
-      }
-    });
-  }else{
-    chartFreq.data.datasets[0].data = freq;
-    chartFreq.data.datasets[1].data = Array(10).fill(expected);
-    chartFreq.update();
-  }
-}
-window.addEventListener("load", () => renderStats());
-
-async function start(){
-  const data = await ambilAPI();
-  if(!data || data.error) return;
-  lastPeriode = parseInt(data.periode, 10);
-  tambahBaris(lastPeriode);
-  cocokkanHasil(data.list);
-  muatRiwayatAwal();
-  mulaiCountdown();
-}
-
-start();
-
-</script>
-</body>
+      <section id="externalPanel" class="external-panel" aria-labelledby="externalTitle" hidden>
+        <div class="panel-toolbar">
+          <div>
+            <h2 id="externalTitle">Situs 55five</h2>
+            <p>Jika situs menolak tampilan panel, gunakan tombol buka situs di tab terpisah.</p>
+          </div>
+          <button id="closeEmbedButton" class="button">Tutup panel</button>
+        </div>
+        <div id="embedContainer"></div>
+      </section>
+      <footer class="page-footer">
+        <span>55FIVE <span class="muted">/ Observasi, bukan kepastian.</span></span
+        ><span>Simulasi edukatif · Poin virtual</span>
+      </footer>
+    </main>
+    <dialog id="resetDialog" aria-labelledby="resetTitle" aria-describedby="resetDescription">
+      <h2 id="resetTitle">Mulai sesi baru?</h2>
+      <p id="resetDescription">
+        Catatan simulasi tab ini akan direset dan saldo demo kembali ke 1.000. Riwayat hasil
+        perangkat tetap tersimpan.
+      </p>
+      <form method="dialog" class="dialog-actions">
+        <button class="button" value="cancel" autofocus>Batal</button
+        ><button class="button primary" value="confirm">Mulai sesi baru</button>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <noscript
+      ><p class="notice">
+        Aktifkan JavaScript untuk memuat data dan menjalankan panel ini.
+      </p></noscript
+    >
+  </body>
 </html>

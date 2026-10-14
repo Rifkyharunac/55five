@@ -19,7 +19,12 @@ export function normalizeResult(row) {
   if (!issueNumber || typeof number !== 'string' || !/^\d(?:,\d)*$/.test(number)) return null;
   const hasil = digit(number.split(',').at(-1));
   if (hasil === null || (row.hasil !== undefined && digit(row.hasil) !== hasil)) return null;
-  return { issueNumber, number, hasil, colour: typeof row.colour === 'string' ? row.colour.slice(0, 40) : '' };
+  return {
+    issueNumber,
+    number,
+    hasil,
+    colour: typeof row.colour === 'string' ? row.colour.slice(0, 40) : '',
+  };
 }
 
 export function category(value) {

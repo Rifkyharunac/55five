@@ -17,8 +17,9 @@ export function createHandler(load) {
       res.setHeader('Allow', 'GET');
       return res.status(405).json({ error: 'Metode tidak diizinkan.', code: 'METHOD_NOT_ALLOWED' });
     }
-    try { return res.status(200).json(await load()); }
-    catch (error) {
+    try {
+      return res.status(200).json({ ...(await load()), serverTime: Date.now() });
+    } catch (error) {
       const code = error instanceof ProviderError ? error.code : 'UPSTREAM_UNAVAILABLE';
       const status = code === 'UPSTREAM_TIMEOUT' ? 504 : code === 'CONFIGURATION_ERROR' ? 503 : 502;
       console.warn(JSON.stringify({ event: 'provider_error', code, status }));

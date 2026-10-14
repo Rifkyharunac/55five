@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newSession, advanceSession, restoreSession, mergeHistory, statistics, filterHistory, historyCsv } from '../src/model.js';
+import {
+  newSession,
+  advanceSession,
+  restoreSession,
+  mergeHistory,
+  statistics,
+  filterHistory,
+  historyCsv,
+} from '../src/model.js';
 
-const id = n => `2026101410005${String(n).padStart(4, '0')}`;
+const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
 const snapshot = (issue, list = []) => ({ issue, list, fetchedAt: 1000, expiresAt: 20000 });
 const result = (issueNumber, hasil) => ({ issueNumber, hasil, number: String(hasil) });
 
@@ -43,14 +51,23 @@ test('marks gaps as missed without counting them as wins or losses', () => {
   const state = newSession();
   advanceSession(state, snapshot(id(1)), () => 0.1);
   advanceSession(state, snapshot(id(20), [result(id(19), 1), result(id(10), 5)]));
-  assert.equal(state.rows.find(row => row.issue === id(1)).status, 'missed');
+  assert.equal(state.rows.find((row) => row.issue === id(1)).status, 'missed');
   assert.equal(state.missed, 1);
   assert.equal(state.win + state.lose, 0);
 });
 test('migrates valid legacy history and discards malformed or out-of-range entries', () => {
-  const merged = mergeHistory([{ p: id(1), h: 2 }, { p: '<script>', h: 1 }, { p: id(3), h: 99 }],
-    [result(id(2), 8), result(id(1), 3), { issueNumber: id(4), hasil: '2abc' }]);
-  assert.deepEqual(merged, [{ p: id(2), h: 8 }, { p: id(1), h: 3 }]);
+  const merged = mergeHistory(
+    [
+      { p: id(1), h: 2 },
+      { p: '<script>', h: 1 },
+      { p: id(3), h: 99 },
+    ],
+    [result(id(2), 8), result(id(1), 3), { issueNumber: id(4), hasil: '2abc' }],
+  );
+  assert.deepEqual(merged, [
+    { p: id(2), h: 8 },
+    { p: id(1), h: 3 },
+  ]);
 });
 test('restores malformed sessions to a valid empty state', () => {
   for (const value of [null, [], { version: 2, rows: [], win: -10 }, { version: 2, rows: 'bad' }]) {
@@ -58,18 +75,34 @@ test('restores malformed sessions to a valid empty state', () => {
     assert.equal(restoreSession(value).win, 0);
   }
 });
+
+test('numeric IDs in corrupt session storage cannot crash restoration', () => {
+  const state = {
+    ...newSession(),
+    currentIssue: 20261014,
+    rows: [{ issue: 20261014, prediction: 'Besar', status: 'pending', result: null }],
+  };
+  assert.doesNotThrow(() => restoreSession(state));
+  assert.equal(restoreSession(state).rows.length, 0);
+});
 test('filters and statistics agree, including overlapping violet color membership', () => {
   const history = [0, 5, 7, 3, 2].map((h, i) => ({ p: id(i + 1), h }));
   const stats = statistics(history);
   assert.equal(stats.total, 5);
   assert.equal(stats.big, 2);
   assert.deepEqual(stats.colors, { Hijau: 3, Merah: 2, Ungu: 2 });
-  assert.equal(stats.frequency.reduce((sum, n) => sum + n, 0), 5);
+  assert.equal(
+    stats.frequency.reduce((sum, n) => sum + n, 0),
+    5,
+  );
   assert.equal(filterHistory(history, { category: 'Besar', query: '', limit: 100 }).length, 2);
   assert.equal(filterHistory(history, { query: id(1), limit: 100 }).length, 1);
 });
 test('CSV exports full safe issue IDs and correct category with no invalid rows', () => {
-  const csv = historyCsv([{ p: id(1), h: 5 }, { p: '=1+1', h: 2 }]);
+  const csv = historyCsv([
+    { p: id(1), h: 5 },
+    { p: '=1+1', h: 2 },
+  ]);
   assert.ok(csv.startsWith('\uFEFF'));
   assert.ok(csv.includes(id(1)));
   assert.ok(csv.includes('Besar'));

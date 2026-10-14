@@ -10,24 +10,45 @@ export function createStorage(getLocal, getSession, onError = () => {}) {
     try {
       const text = getStore().getItem(key);
       return text === null ? fallback : JSON.parse(text);
-    } catch { onError('Data lokal tidak dapat dibaca. Sesi tetap berjalan di memori.'); return fallback; }
+    } catch {
+      onError('Data lokal tidak dapat dibaca. Sesi tetap berjalan di memori.');
+      return fallback;
+    }
   }
   function write(getStore, key, data) {
-    try { getStore().setItem(key, JSON.stringify(data)); return true; }
-    catch { onError('Penyimpanan browser tidak tersedia atau penuh. Perubahan mungkin hilang saat dimuat ulang.'); return false; }
+    try {
+      getStore().setItem(key, JSON.stringify(data));
+      return true;
+    } catch {
+      onError(
+        'Penyimpanan browser tidak tersedia atau penuh. Perubahan mungkin hilang saat dimuat ulang.',
+      );
+      return false;
+    }
   }
   return {
-    loadHistory() { return mergeHistory(read(getLocal, LEGACY_KEY, []), read(getLocal, HISTORY_KEY, [])); },
+    loadHistory() {
+      return mergeHistory(read(getLocal, LEGACY_KEY, []), read(getLocal, HISTORY_KEY, []));
+    },
     saveHistory(history) {
       // Read first to preserve results saved by another tab since the last poll.
       return write(getLocal, HISTORY_KEY, mergeHistory(read(getLocal, HISTORY_KEY, []), history));
     },
-    loadSession() { return restoreSession(read(getSession, SESSION_KEY, null)); },
-    saveSession(session) { return write(getSession, SESSION_KEY, session); },
+    loadSession() {
+      return restoreSession(read(getSession, SESSION_KEY, null));
+    },
+    saveSession(session) {
+      return write(getSession, SESSION_KEY, session);
+    },
     loadSettings() {
       const value = read(getLocal, SETTINGS_KEY, {});
-      return { theme: value?.theme === 'light' ? 'light' : 'dark', compact: value?.compact === true };
+      return {
+        theme: value?.theme === 'light' ? 'light' : 'dark',
+        compact: value?.compact === true,
+      };
     },
-    saveSettings(settings) { return write(getLocal, SETTINGS_KEY, settings); },
+    saveSettings(settings) {
+      return write(getLocal, SETTINGS_KEY, settings);
+    },
   };
 }
