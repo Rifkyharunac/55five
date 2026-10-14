@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs';
 
 const chrome =
   process.env.PLAYWRIGHT_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const port = process.env.E2E_PORT || '3000';
+const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
@@ -12,7 +14,7 @@ export default defineConfig({
   expect: { timeout: 7000 },
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     launchOptions: existsSync(chrome) ? { executablePath: chrome } : {},
@@ -25,7 +27,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://127.0.0.1:3000',
+    url: baseURL,
+    env: { PORT: port },
     reuseExistingServer: !process.env.CI,
   },
 });

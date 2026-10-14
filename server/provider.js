@@ -107,7 +107,7 @@ export function createProvider({ fetchImpl = fetch, env = process.env, timeoutMs
     const list = [...new Map(rows.map((row) => [row.issueNumber, row])).values()].sort((a, b) =>
       compareIssues(b.issueNumber, a.issueNumber),
     );
-    return { list, fetchedAt: Date.now(), source: 'live' };
+    return { count: list.length, list, fetchedAt: Date.now(), source: 'live' };
   }
 
   async function snapshot() {

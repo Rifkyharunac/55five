@@ -2,6 +2,7 @@ import { compareIssues } from './data.js';
 import { newSession, advanceSession, mergeHistory, filterHistory, historyCsv } from './model.js';
 import { createStorage, HISTORY_KEY } from './storage.js';
 import { fetchSnapshot, createPoller } from './network.js';
+import { renderExperiments, setupBacktest } from './experiments-ui.js';
 import {
   $,
   text,
@@ -21,6 +22,7 @@ const storage = createStorage(
   },
 );
 let history = storage.loadHistory();
+let seedHistory = [];
 let session = storage.loadSession();
 const settings = storage.loadSettings();
 let latest = null,
@@ -29,22 +31,27 @@ let latest = null,
   toastTimer;
 
 function filteredHistory() {
-  return filterHistory(history, {
+  return filterHistory(allHistory(), {
     query: $('searchInput').value,
     category: $('categoryFilter').value,
     limit: $('historyLimit').value,
   });
 }
 function drawHistory() {
-  renderHistory(filteredHistory(), history.length);
+  renderHistory(filteredHistory(), allHistory().length);
 }
 function drawStats() {
-  renderStats(history.slice(0, Number($('statsLimit').value)));
+  const count = Number($('statsLimit').value);
+  renderStats(count ? allHistory().slice(0, count) : allHistory());
+}
+function allHistory() {
+  return mergeHistory(seedHistory, history, Infinity);
 }
 function drawData() {
   drawHistory();
   drawStats();
-  renderRecent(history);
+  renderRecent(allHistory());
+  renderExperiments(allHistory());
 }
 function applySettings() {
   document.documentElement.dataset.theme = settings.theme;
@@ -119,7 +126,7 @@ const poller = createPoller({
       storage.saveHistory(history);
       drawData();
     }
-    if (advanceSession(session, data)) {
+    if (advanceSession(session, data, Math.random, allHistory())) {
       storage.saveSession(session);
       renderSession(session);
     }
@@ -255,7 +262,25 @@ $('closeEmbedButton').addEventListener('click', () => toggleEmbed(false));
 
 applySettings();
 setupTabs();
+setupBacktest(allHistory, toast);
 renderSession(session);
 drawData();
 setInterval(tick, 250);
+try {
+  const response = await fetch('/data/riwayat.json', {
+    signal: AbortSignal.timeout(5000),
+    cache: 'no-cache',
+  });
+  if (!response.ok) throw new Error('Archive unavailable');
+  const archive = await response.json();
+  if (!Array.isArray(archive)) throw new Error('Invalid archive');
+  seedHistory = mergeHistory(archive, [], Infinity);
+  drawData();
+} catch {
+  text(
+    'seedNotice',
+    'Arsip awal belum tersedia. Riwayat lokal dan pembaruan langsung tetap dapat digunakan.',
+  );
+  $('seedNotice').hidden = false;
+}
 syncPolling();

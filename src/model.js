@@ -1,4 +1,5 @@
 import { issueId, digit, category, colors, compareIssues } from './data.js';
+import { predict, METHODS } from './strategy.js';
 
 export const HISTORY_LIMIT = 500;
 export const INITIAL_BALANCE = 1000;
@@ -12,6 +13,7 @@ export function newSession() {
     win: 0,
     lose: 0,
     missed: 0,
+    methods: Object.fromEntries(METHODS.map((method) => [method, { win: 0, lose: 0 }])),
     createdAt: Date.now(),
   };
 }
@@ -38,6 +40,7 @@ export function restoreSession(value) {
       !issueId(row.issue) ||
       !['Besar', 'Kecil'].includes(row.prediction) ||
       !['pending', 'win', 'lose', 'missed'].includes(row.status) ||
+      (row.method !== undefined && !METHODS.includes(row.method)) ||
       seen.has(row.issue) ||
       !value.currentIssue ||
       compareIssues(row.issue, value.currentIssue) > 0 ||
@@ -54,6 +57,30 @@ export function restoreSession(value) {
     )
   )
     return newSession();
+  const methods =
+    value.methods ??
+    Object.fromEntries(
+      METHODS.map((method) => [
+        method,
+        {
+          win: method === 'acak' ? value.win : 0,
+          lose: method === 'acak' ? value.lose : 0,
+        },
+      ]),
+    );
+  if (
+    METHODS.some(
+      (method) =>
+        !methods[method] ||
+        ['win', 'lose'].some(
+          (key) => !Number.isSafeInteger(methods[method][key]) || methods[method][key] < 0,
+        ),
+    ) ||
+    ['win', 'lose'].some(
+      (key) => METHODS.reduce((sum, method) => sum + methods[method][key], 0) !== value[key],
+    )
+  )
+    return newSession();
   return {
     version: 2,
     currentIssue: value.currentIssue,
@@ -61,16 +88,20 @@ export function restoreSession(value) {
     win: value.win,
     lose: value.lose,
     missed: value.missed,
+    methods: Object.fromEntries(
+      METHODS.map((method) => [method, { win: methods[method].win, lose: methods[method].lose }]),
+    ),
     rows: value.rows.map((row) => ({
       issue: row.issue,
       prediction: row.prediction,
+      method: row.method || 'acak',
       status: row.status,
       result: ['win', 'lose'].includes(row.status) ? Number(row.result) : null,
     })),
   };
 }
 
-export function advanceSession(state, data, random = Math.random) {
+export function advanceSession(state, data, random = Math.random, history = []) {
   const issue = issueId(data?.issue);
   if (!issue || (state.currentIssue && compareIssues(issue, state.currentIssue) < 0)) return false;
   const results = new Map(
@@ -86,6 +117,7 @@ export function advanceSession(state, data, random = Math.random) {
       row.result = results.get(row.issue);
       row.status = category(row.result) === row.prediction ? 'win' : 'lose';
       state[row.status]++;
+      state.methods[row.method || 'acak'][row.status]++;
       changed = true;
     } else if (oldest && compareIssues(row.issue, oldest) < 0) {
       row.status = 'missed';
@@ -103,9 +135,13 @@ export function advanceSession(state, data, random = Math.random) {
     Number.isFinite(data.expiresAt) &&
     data.expiresAt - data.fetchedAt > 3000
   ) {
+    const estimate = predict(
+      history.filter((row) => compareIssues(row.p, issue) < 0),
+      random,
+    );
     state.rows.unshift({
       issue,
-      prediction: random() > 0.5 ? 'Besar' : 'Kecil',
+      ...estimate,
       status: 'pending',
       result: null,
     });
@@ -116,7 +152,7 @@ export function advanceSession(state, data, random = Math.random) {
   return changed;
 }
 
-export function mergeHistory(previous = [], incoming = []) {
+export function mergeHistory(previous = [], incoming = [], limit = HISTORY_LIMIT) {
   const entries = new Map();
   for (const row of [
     ...(Array.isArray(previous) ? previous : []),
@@ -127,21 +163,26 @@ export function mergeHistory(previous = [], incoming = []) {
     const h = digit(row.h ?? row.hasil);
     if (p && h !== null) entries.set(p, { p, h });
   }
-  return [...entries.values()].sort((a, b) => compareIssues(b.p, a.p)).slice(0, HISTORY_LIMIT);
+  return [...entries.values()].sort((a, b) => compareIssues(b.p, a.p)).slice(0, limit);
 }
 
 export function filterHistory(
   history,
   { category: selected = '', query = '', limit = HISTORY_LIMIT } = {},
 ) {
-  const count = [30, 100, 500].includes(Number(limit)) ? Number(limit) : HISTORY_LIMIT;
-  return mergeHistory(history)
+  const count =
+    Number(limit) === 0
+      ? Infinity
+      : [30, 100, 500].includes(Number(limit))
+        ? Number(limit)
+        : HISTORY_LIMIT;
+  return mergeHistory(history, [], Infinity)
     .filter((row) => (!selected || category(row.h) === selected) && row.p.includes(query.trim()))
     .slice(0, count);
 }
 
 export function statistics(history) {
-  const rows = mergeHistory(history);
+  const rows = mergeHistory(history, [], Infinity);
   const stats = {
     total: rows.length,
     big: 0,
@@ -177,7 +218,7 @@ export function statistics(history) {
 export function historyCsv(history) {
   const rows = [
     ['Periode', 'Angka', 'Kategori', 'Warna'],
-    ...mergeHistory(history).map((row) => [
+    ...mergeHistory(history, [], Infinity).map((row) => [
       row.p,
       row.h,
       category(row.h),

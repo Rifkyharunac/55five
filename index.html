@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#101715" />
     <meta
       name="description"
-      content="Panel periode, riwayat hasil, statistik deskriptif, dan simulasi acak 55FIVE."
+      content="Panel periode, riwayat hasil, statistik deskriptif, dan simulasi metode 55FIVE."
     />
     <title>55FIVE — Dashboard periode & hasil</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -49,6 +49,7 @@
       </div>
       <div class="notice" id="networkNotice" role="status" hidden></div>
       <div class="notice" id="storageNotice" role="status" hidden></div>
+      <div class="notice" id="seedNotice" role="status" hidden></div>
       <div class="workspace">
         <div class="primary-column">
           <section class="period-card" aria-labelledby="periodTitle">
@@ -125,6 +126,24 @@
               >
                 Statistik
               </button>
+              <button
+                id="tab-patterns"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-patterns"
+                tabindex="-1"
+              >
+                Pola
+              </button>
+              <button
+                id="tab-education"
+                role="tab"
+                aria-selected="false"
+                aria-controls="view-education"
+                tabindex="-1"
+              >
+                Edukasi
+              </button>
             </div>
             <div id="view-session" role="tabpanel" aria-labelledby="tab-session" tabindex="0">
               <div class="panel-toolbar">
@@ -142,12 +161,12 @@
               >
                 <table>
                   <caption>
-                    Simulasi acak dan hasil per periode, 30 baris terbaru
+                    Simulasi metode dan hasil per periode, 30 baris terbaru
                   </caption>
                   <thead>
                     <tr>
                       <th scope="col">Periode</th>
-                      <th scope="col">Simulasi acak</th>
+                      <th scope="col">Simulasi / metode</th>
                       <th scope="col">Hasil</th>
                       <th scope="col">Status</th>
                     </tr>
@@ -161,9 +180,37 @@
                 <p>Simulasi dimulai setelah data dan waktu server terkonfirmasi.</p>
               </div>
               <div class="panel-footer">
-                <span><span class="tiny-dot"></span> Simulasi acak, bukan rekomendasi</span
+                <span><span class="tiny-dot"></span> Simulasi metode, bukan rekomendasi</span
                 ><span id="sessionCount">0 catatan</span>
               </div>
+              <details class="method-details">
+                <summary>Kinerja per metode</summary>
+                <p>
+                  pola-6 mencari pola serupa; fallback memakai mayoritas 30 hasil, seluruh riwayat,
+                  lalu acak jika riwayat kosong. Semua berupa eksperimen.
+                </p>
+                <div
+                  class="table-scroll"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Kinerja metode, dapat digulir"
+                >
+                  <table>
+                    <caption>
+                      Total kumulatif per metode dalam sesi ini
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Metode</th>
+                        <th scope="col">WIN</th>
+                        <th scope="col">LOSE</th>
+                        <th scope="col">Akurasi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="methodBody"></tbody>
+                  </table>
+                </div>
+              </details>
             </div>
             <div
               id="view-history"
@@ -175,7 +222,7 @@
               <div class="panel-toolbar">
                 <div>
                   <h2>Riwayat hasil</h2>
-                  <p>Maksimal 500 hasil tersimpan di perangkat ini.</p>
+                  <p>Gabungan arsip proyek dan hingga 500 hasil lokal.</p>
                 </div>
                 <button id="exportButton" class="button small" disabled>↓ Ekspor CSV</button>
               </div>
@@ -198,6 +245,7 @@
                     <option value="30">30 terakhir</option>
                     <option value="100">100 terakhir</option>
                     <option value="500">500 terakhir</option>
+                    <option value="0">Semua hasil</option>
                   </select></label
                 >
               </div>
@@ -243,6 +291,7 @@
                     <option value="30">30 ronde</option>
                     <option value="100">100 ronde</option>
                     <option value="500" selected>500 ronde</option>
+                    <option value="0">Semua arsip</option>
                   </select></label
                 >
               </div>
@@ -291,6 +340,181 @@
                   Statistik menggambarkan hasil yang sudah terjadi. Setiap ronde acak dan
                   independen; pola sebelumnya tidak memastikan hasil berikutnya.
                 </p>
+              </div>
+            </div>
+            <div
+              id="view-patterns"
+              role="tabpanel"
+              aria-labelledby="tab-patterns"
+              tabindex="0"
+              hidden
+            >
+              <div class="panel-toolbar">
+                <div>
+                  <h2>Bentuk pola historis</h2>
+                  <p id="patternMeta">Menunggu data…</p>
+                </div>
+              </div>
+              <div class="stats-content">
+                <h3>20 hasil terakhir</h3>
+                <div
+                  id="patternStrip"
+                  class="pattern-strip"
+                  aria-label="Urutan hasil, lama ke baru"
+                ></div>
+                <p class="chart-note">
+                  B = Besar, K = Kecil. Urutan dari lama ke baru; sampel bisa memiliki jeda.
+                </p>
+                <div class="pattern-grid">
+                  <section class="stat-box">
+                    <h3>Streak berjalan</h3>
+                    <strong id="patternStreak" class="streak-value">—</strong>
+                    <p>Dalam sampel tersimpan</p>
+                  </section>
+                  <section class="stat-box">
+                    <h3>Dragon terakhir (≥4)</h3>
+                    <strong id="patternDragon" class="streak-value">—</strong>
+                    <p id="dragonNote">Belum ada sampel</p>
+                  </section>
+                  <section class="stat-box">
+                    <h3>Selang-seling / ABAB</h3>
+                    <strong id="patternAlternating" class="streak-value">—</strong>
+                    <p>Maksimum pada 20 hasil terakhir</p>
+                  </section>
+                </div>
+                <p class="analysis-note">
+                  Bentuk pola adalah deskripsi, bukan sinyal. Rangkaian hasil sebelumnya tidak
+                  memastikan hasil berikutnya.
+                </p>
+                <section class="backtest-section">
+                  <div class="subheading">
+                    <h3>Bandingkan metode</h3>
+                    <button id="backtestButton" class="button small" disabled>
+                      Jalankan backtest
+                    </button>
+                  </div>
+                  <p class="chart-note" id="backtestHint">Perlu lebih dari 100 hasil.</p>
+                  <p class="chart-note">
+                    Walk-forward: setiap tebakan hanya memakai hasil yang lebih lama. Baseline
+                    mayoritas-30 pada backtest mengikuti hasil terakhir saat seri. Angka dihitung
+                    ulang, bukan klaim akurasi tetap.
+                  </p>
+                  <div id="backtestResult" hidden>
+                    <p id="backtestMeta" class="analysis-note" role="status"></p>
+                    <div
+                      class="table-scroll"
+                      tabindex="0"
+                      role="region"
+                      aria-label="Hasil backtest, dapat digulir"
+                    >
+                      <table>
+                        <caption>
+                          Perbandingan backtest walk-forward
+                        </caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Metode</th>
+                            <th scope="col">Prediksi</th>
+                            <th scope="col">Benar</th>
+                            <th scope="col">Akurasi</th>
+                          </tr>
+                        </thead>
+                        <tbody id="backtestBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+            <div
+              id="view-education"
+              role="tabpanel"
+              aria-labelledby="tab-education"
+              tabindex="0"
+              hidden
+            >
+              <div class="panel-toolbar">
+                <div>
+                  <h2>Memahami angka, mengenali batasnya</h2>
+                  <p>Panduan membaca simulasi dan hasil.</p>
+                </div>
+              </div>
+              <div class="education-content">
+                <section>
+                  <h3>Masa lalu bukan kepastian berikutnya</h3>
+                  <p>
+                    Pada proses acak yang independen, rangkaian besar atau kecil tidak membuat hasil
+                    lawannya menjadi wajib muncul. Statistik dan pola di panel ini hanya
+                    mendeskripsikan sampel yang tersedia.
+                  </p>
+                </section>
+                <section>
+                  <h3>Payout dan nilai harapan</h3>
+                  <p>
+                    Dalam contoh hipotetis, jika peluang menang 50% dan pembayaran total 1,96 kali
+                    taruhan, nilai harapan per 1 poin adalah (0,5 × 1,96) − 1 = −0,02 poin. Selisih
+                    2% ini disebut house edge. Ini ilustrasi matematika, bukan daftar payout resmi
+                    penyedia.
+                  </p>
+                  <div
+                    class="table-scroll"
+                    tabindex="0"
+                    role="region"
+                    aria-label="Contoh nilai harapan, dapat digulir"
+                  >
+                    <table>
+                      <caption>
+                        Contoh hipotetis pembayaran dan nilai harapan
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Peluang</th>
+                          <th scope="col">Pembayaran total</th>
+                          <th scope="col">EV per poin</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>10%</td>
+                          <td>9×</td>
+                          <td>−0,10</td>
+                        </tr>
+                        <tr>
+                          <td>50%</td>
+                          <td>1,96×</td>
+                          <td>−0,02</td>
+                        </tr>
+                        <tr>
+                          <td>20%</td>
+                          <td>4,5×</td>
+                          <td>−0,10</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p>
+                    Aturan payout, biaya, dan kombinasi warna di situs dapat berbeda. Menggandakan
+                    taruhan setelah kalah tidak mengubah peluang dasar dan dapat memperbesar
+                    kerugian.
+                  </p>
+                </section>
+                <section>
+                  <h3>Backtest bukan janji akurasi</h3>
+                  <p>
+                    Hasil backtest berlaku untuk sampel dan aturan uji yang dipakai. Sampel arsip
+                    memiliki celah; hasilnya bukan bukti bahwa metode akan unggul pada ronde
+                    berikutnya. Panel tidak menjanjikan akurasi 80–100%.
+                  </p>
+                </section>
+                <section>
+                  <h3>Cara membaca sesi</h3>
+                  <p>
+                    WIN dan LOSE berasal dari hasil yang cocok dengan ID periode lengkap. Terlewat
+                    berarti hasil belum dapat dipastikan dan tidak dihitung dalam akurasi. Saldo
+                    demo adalah poin virtual dengan perubahan tetap ±10 per ronde; tidak mewakili
+                    payout atau saldo akun eksternal.
+                  </p>
+                </section>
               </div>
             </div>
           </section>

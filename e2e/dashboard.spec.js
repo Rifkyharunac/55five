@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/data/riwayat.json', (route) => route.fulfill({ json: [] }));
+});
+
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
 function snapshot(period = 20) {
   const now = Date.now();
@@ -101,7 +105,8 @@ test('themes and density persist while keyboard navigation activates the right p
   await page.getByRole('button', { name: 'Aktifkan tema terang' }).click();
   await page.getByRole('switch', { name: /Tampilan ringkas/ }).check();
   await page.getByRole('tab', { name: 'Simulasi sesi' }).focus();
-  await page.keyboard.press('End');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Statistik' })).toBeFocused();
   await expect(page.locator('#view-stats')).toBeVisible();
   await expect(page.locator('#frequencyChart .frequency-column')).toHaveCount(10);
@@ -192,7 +197,7 @@ test('all panels fit mobile and desktop widths without page overflow', async ({ 
   await expect(page.locator('#connectionText')).toHaveText('Terhubung');
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    for (const tab of ['Simulasi sesi', 'Riwayat hasil', 'Statistik']) {
+    for (const tab of ['Simulasi sesi', 'Riwayat hasil', 'Statistik', 'Pola', 'Edukasi']) {
       await page.getByRole('tab', { name: tab, exact: true }).click();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
@@ -204,12 +209,13 @@ test('all panels fit mobile and desktop widths without page overflow', async ({ 
 });
 
 test('dark and light views pass automated accessibility checks', async ({ page }) => {
+  test.setTimeout(60000);
   await mockData(page);
   await page.goto('/');
   await expect(page.locator('#connectionText')).toHaveText('Terhubung');
   for (const theme of ['dark', 'light']) {
     if (theme === 'light') await page.getByRole('button', { name: 'Aktifkan tema terang' }).click();
-    for (const tab of ['Simulasi sesi', 'Riwayat hasil', 'Statistik']) {
+    for (const tab of ['Simulasi sesi', 'Riwayat hasil', 'Statistik', 'Pola', 'Edukasi']) {
       await page.getByRole('tab', { name: tab, exact: true }).click();
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
@@ -217,4 +223,24 @@ test('dark and light views pass automated accessibility checks', async ({ page }
       expect(results.violations).toEqual([]);
     }
   }
+});
+
+test('archive seeds analytics and worker backtest completes without blocking the dashboard', async ({
+  page,
+}) => {
+  const archive = Array.from({ length: 150 }, (_, i) => ({
+    p: `2026101310005${String(i).padStart(4, '0')}`,
+    h: i % 10,
+  }));
+  await page.route('**/data/riwayat.json', (route) => route.fulfill({ json: archive }));
+  await mockData(page);
+  await page.goto('/');
+  await expect(page.locator('#connectionText')).toHaveText('Terhubung');
+  await page.getByRole('tab', { name: 'Pola', exact: true }).click();
+  await expect(page.locator('#patternStrip span')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Jalankan backtest' }).click();
+  await expect(page.locator('#backtestBody tr')).toHaveCount(4);
+  await expect(page.locator('#backtestMeta')).toContainText('160 sampel');
+  await page.getByRole('tab', { name: 'Edukasi', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Backtest bukan janji akurasi' })).toBeVisible();
 });

@@ -21,7 +21,7 @@ kontrak API penyedia belum diverifikasi.
 ## Asumsi arah produk
 
 Tetap berupa panel hasil, statistik, dan simulasi prediksi berbahasa Indonesia,
-dengan deployment Vercel. Prediksi acak tetap dijelaskan sebagai simulasi;
+dengan deployment Vercel. Prediksi metode tetap dijelaskan sebagai simulasi;
 statistik historis tidak diberi klaim menjamin hasil berikutnya.
 Riwayat lokal yang valid dipertahankan melalui migrasi yang teruji.
 
@@ -55,3 +55,9 @@ Pengujian setiap modul dilakukan bersamaan dengan implementasinya; modul terakhi
 3. Ketersediaan dokumentasi/konfigurasi resmi API penyedia akan diperiksa pada modul data-api; signature baru tidak boleh ditebak.
 
 Pengguna meminta implementasi langsung setelah meninjau cakupan; tahapan berikut dijalankan tanpa gerbang persetujuan tambahan.
+
+## Integrasi upstream dan hasil akhir
+
+Main `2db18e7` menyertakan perkembangan setelah checkout awal: pola-6, fallback mayoritas, arsip 1.163 hasil, backtest CLI, dan pengumpul arsip terjadwal. Semua kemampuan ini diintegrasikan ke modul baru. Kelima tab tersedia; perhitungan live hanya memakai hasil sebelum periode aktif. Arsip penuh dapat dicari dan diekspor, sementara penyimpanan perangkat dibatasi 500 hasil terbaru.
+
+API aktual berhasil diperiksa dengan payload yang sudah ada. Dokumentasi penandatanganan resmi tetap belum tersedia; override konfigurasi tervalidasi disediakan tanpa menebak signature baru. Bukti pengujian akhir ada di `tasks/verification.md`.

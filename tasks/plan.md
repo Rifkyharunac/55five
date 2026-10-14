@@ -8,7 +8,9 @@ Persetujuan: pengguna meminta langsung mengerjakan cakupan pembaruan pada 14 Okt
 4. dashboard-ui: dashboard gelap dengan aksen mint dari desain lama, kolom utama dan sidebar konteks pada desktop; tumpukan pada ponsel; tema terang/gelap, keyboard, status koneksi, kontrol sesi dan tampilan situs eksternal opsional.
 5. delivery-quality: Node test runner, Playwright + axe untuk alur utama dan aksesibilitas, server dev lokal, output statis terpilah, CI dan panduan Vercel.
 
-Tidak ada dependensi runtime. Dependensi pengujian saja: Playwright dan axe. API penyedia tidak disimulasikan dalam mode produksi; mock hanya dipakai pada pengujian. Urutan dan temuan modul dirujuk di CAPABILITY-MAP.md.
+Tidak ada dependensi runtime. Alat pengembangan: Playwright, axe, dan Prettier. API penyedia tidak disimulasikan dalam mode produksi; mock hanya dipakai pada pengujian. Urutan dan temuan modul dirujuk di CAPABILITY-MAP.md.
+
+Integrasi main terbaru mempertahankan pola-6 dan fallback mayoritas, arsip historis, pengumpul terjadwal, serta backtest CLI. UI menambahkan Pola dan Edukasi dengan backtest worker, sehingga pekerjaan berat tidak menghambat interaksi dashboard.
 
 ## Kontrak desain
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — 2026-10-14
+## 2.0.0 — Belum dirilis
 
 ### Added
 
@@ -10,6 +10,8 @@
 - Endpoint `/api/history`, timeout, validasi respons, serta pesan error aman.
 - Sesi per tab yang bertahan saat reload, migrasi riwayat lama, dan pemberitahuan penyimpanan gagal.
 - Server pengembangan, build statis terpilah, pengujian unit/browser/aksesibilitas, dan CI.
+- Tab Pola dan Edukasi, backtest deterministik di worker, serta perbandingan empat metode.
+- Arsip upstream digabung dengan hasil live; pencarian, statistik, dan CSV mendukung seluruh arsip.
 
 ### Fixed
 
@@ -25,10 +27,12 @@
 - Situs eksternal dimuat hanya saat pengguna membuka panelnya.
 - CORS wildcard dihapus; frontend memakai API satu origin.
 - Header keamanan diterapkan dan hanya aset publik yang masuk output build.
+- Metode pola-6 dan fallback dari main dipertahankan, dengan penghitung per metode dan pencegahan penggunaan hasil masa depan.
+- Pengumpul arsip terjadwal memakai validasi yang sama dengan API, deduplikasi, dan penulisan atomik.
 
 ### Migration
 
 - Jalankan `npm ci`, lalu gunakan Node.js 24 dan konfigurasi Vercel dari repositori.
 - Riwayat valid `five55_history_v1` dibaca otomatis; sumber lama tidak dihapus.
 - Scorecard lama tidak dapat dipulihkan karena implementasi sebelumnya hanya menyimpannya di DOM.
-- UI memberi label eksplisit bahwa prediksi adalah simulasi acak dan saldo berupa poin virtual.
+- UI memberi label eksplisit bahwa prediksi adalah simulasi metode dan saldo berupa poin virtual.

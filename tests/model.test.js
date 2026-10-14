@@ -108,3 +108,12 @@ test('CSV exports full safe issue IDs and correct category with no invalid rows'
   assert.ok(csv.includes('Besar'));
   assert.ok(!csv.includes('=1+1'));
 });
+
+test('archive filtering and CSV can include more than the local 500-result limit', () => {
+  const archive = Array.from({ length: 800 }, (_, i) => ({ p: id(i), h: i % 10 }));
+  const filtered = filterHistory(archive, { limit: 0 });
+  assert.equal(filtered.length, 800);
+  assert.equal(filterHistory(archive, { query: id(1), limit: 30 })[0].p, id(1));
+  assert.equal(historyCsv(filtered).split('\r\n').length, 801);
+  assert.equal(statistics(archive).total, 800);
+});

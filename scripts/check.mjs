@@ -1,7 +1,16 @@
 import { readdir } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 let failed = false;
-for (const folder of ['api', 'server', 'src', 'scripts', 'tests', 'e2e']) {
+for (const folder of [
+  '.',
+  '.github/workflows',
+  'api',
+  'server',
+  'src',
+  'scripts',
+  'tests',
+  'e2e',
+]) {
   let files;
   try {
     files = await readdir(folder);

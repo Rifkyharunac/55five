@@ -12,12 +12,13 @@ const types = {
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.json': 'application/json; charset=utf-8',
 };
 const port = Number(process.env.PORT || 3000);
 createServer(async (req, res) => {
   for (const rule of config.headers || [])
     for (const header of rule.headers) res.setHeader(header.key, header.value);
-  const pathname = new URL(req.url, 'http://localhost').pathname;
+  const pathname = new URL(req.url, 'http://localhost').pathname.replace(/\/$/, '') || '/';
   if (pathname === '/api' || pathname === '/api/history') {
     res.status = (code) => {
       res.statusCode = code;
@@ -34,7 +35,12 @@ createServer(async (req, res) => {
     return res.end();
   }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  if (!(file === 'index.html' || file === 'favicon.svg' || /^src\/[a-z-]+\.(js|css)$/.test(file))) {
+  if (!(
+    file === 'index.html' ||
+    file === 'favicon.svg' ||
+    file === 'data/riwayat.json' ||
+    /^src\/[a-z-]+\.(js|css)$/.test(file)
+  )) {
     res.writeHead(404);
     return res.end('Not found');
   }

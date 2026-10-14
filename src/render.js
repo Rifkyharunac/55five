@@ -34,13 +34,24 @@ export function renderSession(session) {
     const tr = element('tr');
     const issue = cell(tr, entry.issue.slice(-5));
     issue.append(element('small', entry.issue));
-    cell(tr, entry.prediction);
+    const predictionCell = cell(tr, entry.prediction);
+    predictionCell.append(element('small', entry.method || 'acak'));
     cell(tr, entry.result === null ? '—' : `${entry.result} · ${category(entry.result)}`);
     const labels = { win: 'WIN', lose: 'LOSE', pending: 'Menunggu', missed: 'Terlewat' };
     cell(tr, element('span', labels[entry.status], `badge ${entry.status}`));
     fragment.append(tr);
   }
   $('sessionBody').replaceChildren(fragment);
+  const methodRows = Object.entries(session.methods).map(([method, counts]) => {
+    const row = element('tr');
+    const total = counts.win + counts.lose;
+    cell(row, method);
+    cell(row, String(counts.win));
+    cell(row, String(counts.lose));
+    cell(row, total ? `${((100 * counts.win) / total).toFixed(1)}%` : '—');
+    return row;
+  });
+  $('methodBody').replaceChildren(...methodRows);
 }
 
 export function renderHistory(history, storedCount) {
