@@ -27,13 +27,13 @@ Riwayat lokal yang valid dipertahankan melalui migrasi yang teruji.
 
 ## Peta kemampuan
 
-| ID modul | Tanggung jawab dan hasil yang dituju | Bergantung pada |
-|---|---|---|
-| data-api | Validasi respons penyedia, timeout, error terstruktur, pembatasan metode, konfigurasi lingkungan, endpoint riwayat yang konsisten | — |
-| session-engine | Identitas periode lengkap, polling tanpa tumpang tindih, pemulihan koneksi, penyimpanan sesi dan scorecard independen dari jumlah baris tampilan | data-api |
-| analytics-history | Riwayat tervalidasi dan terdeduplikasi, filter periode, ekspor CSV, statistik dan distribusi yang konsisten | session-engine |
-| dashboard-ui | Desain responsif desktop/ponsel, navigasi keyboard, status loading/error/offline, pengaturan tampilan dan integrasi situs eksternal yang jelas | session-engine, analytics-history |
-| delivery-quality | Pengujian regresi, pemeriksaan otomatis CI, dokumentasi setup/configuration/deployment, changelog dan langkah rollback | data-api, session-engine, analytics-history, dashboard-ui |
+| ID modul          | Tanggung jawab dan hasil yang dituju                                                                                                             | Bergantung pada                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| data-api          | Validasi respons penyedia, timeout, error terstruktur, pembatasan metode, konfigurasi lingkungan, endpoint riwayat yang konsisten                | —                                                         |
+| session-engine    | Identitas periode lengkap, polling tanpa tumpang tindih, pemulihan koneksi, penyimpanan sesi dan scorecard independen dari jumlah baris tampilan | data-api                                                  |
+| analytics-history | Riwayat tervalidasi dan terdeduplikasi, filter periode, ekspor CSV, statistik dan distribusi yang konsisten                                      | session-engine                                            |
+| dashboard-ui      | Desain responsif desktop/ponsel, navigasi keyboard, status loading/error/offline, pengaturan tampilan dan integrasi situs eksternal yang jelas   | session-engine, analytics-history                         |
+| delivery-quality  | Pengujian regresi, pemeriksaan otomatis CI, dokumentasi setup/configuration/deployment, changelog dan langkah rollback                           | data-api, session-engine, analytics-history, dashboard-ui |
 
 Urutan implementasi: data-api → session-engine → analytics-history → dashboard-ui → delivery-quality.
 Pengujian setiap modul dilakukan bersamaan dengan implementasinya; modul terakhir mengintegrasikan pemeriksaan tersebut.
