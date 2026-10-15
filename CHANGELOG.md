@@ -28,6 +28,7 @@
 - CORS wildcard dihapus; frontend memakai API satu origin.
 - Header keamanan diterapkan dan hanya aset publik yang masuk output build.
 - Metode pola-6 dan fallback dari main dipertahankan, dengan penghitung per metode dan pencegahan penggunaan hasil masa depan.
+- Simulator sesi kini menilai keempat metode (pola-6, mayoritas-30, mayoritas-all, acak) di setiap periode secara paralel; metode tanpa sinyal abstain dan tidak dihitung. "Ronde selesai" menghitung periode yang dinilai, sedangkan WIN/LOSE menghitung seluruh taruhan metode. Format sesi lama (v2) tidak dapat dipulihkan dan sesi dimulai baru.
 - Pengumpul arsip terjadwal memakai validasi yang sama dengan API, deduplikasi, dan penulisan atomik.
 
 ### Migration

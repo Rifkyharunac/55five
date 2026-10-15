@@ -19,14 +19,37 @@ function cell(row, content) {
   return td;
 }
 
+const SHORT_METHOD = {
+  'pola-6': 'pola-6',
+  'mayoritas-30': 'M30',
+  'mayoritas-all': 'Mall',
+  acak: 'acak',
+};
+
+function picksSummary(picks) {
+  const counts = { Besar: 0, Kecil: 0 };
+  for (const pick of Object.values(picks)) if (pick) counts[pick]++;
+  const parts = ['Besar', 'Kecil'].filter((name) => counts[name] > 0);
+  return parts.length ? parts.map((name) => `${name} ×${counts[name]}`).join(' · ') : '—';
+}
+
+function picksDetail(picks) {
+  return Object.entries(picks)
+    .map(([method, pick]) => `${SHORT_METHOD[method]}: ${pick ?? '–'}`)
+    .join(' · ');
+}
+
 export function renderSession(session) {
   const total = session.win + session.lose;
-  text('scTotal', number(total));
+  text('scTotal', number(session.rounds ?? 0));
   text('scWin', `${number(session.win)} WIN`);
   text('scLose', `${number(session.lose)} LOSE`);
   text('scRate', total ? `${((100 * session.win) / total).toFixed(1).replace('.', ',')}%` : '—');
   text('scSaldo', number(INITIAL_BALANCE + STAKE * (session.win - session.lose)));
-  text('sessionMeta', `Sesi tab ini · ${number(session.missed)} terlewat · total tetap tersimpan`);
+  text(
+    'sessionMeta',
+    `Sesi tab ini · 4 metode dinilai tiap ronde · ${number(session.missed)} terlewat · total tetap tersimpan`,
+  );
   text('sessionCount', `${Math.min(30, session.rows.length)} catatan terbaru`);
   $('sessionEmpty').hidden = session.rows.length > 0;
   const fragment = document.createDocumentFragment();
@@ -34,11 +57,29 @@ export function renderSession(session) {
     const tr = element('tr');
     const issue = cell(tr, entry.issue.slice(-5));
     issue.append(element('small', entry.issue));
-    const predictionCell = cell(tr, entry.prediction);
-    predictionCell.append(element('small', entry.method || 'acak'));
+    const predictionCell = cell(tr, picksSummary(entry.picks));
+    predictionCell.append(element('small', picksDetail(entry.picks)));
     cell(tr, entry.result === null ? '—' : `${entry.result} · ${category(entry.result)}`);
-    const labels = { win: 'WIN', lose: 'LOSE', pending: 'Menunggu', missed: 'Terlewat' };
-    cell(tr, element('span', labels[entry.status], `badge ${entry.status}`));
+    const statusCell = element('td');
+    tr.append(statusCell);
+    if (entry.status === 'scored') {
+      let win = 0,
+        lose = 0;
+      const actual = category(entry.result);
+      for (const [method, pick] of Object.entries(entry.picks)) {
+        if (pick === null) continue;
+        if (actual === pick) win++;
+        else lose++;
+      }
+      if (win) statusCell.append(element('span', `${win} WIN`, 'badge win'));
+      if (lose) {
+        if (win) statusCell.append(document.createTextNode(' '));
+        statusCell.append(element('span', `${lose} LOSE`, 'badge lose'));
+      }
+    } else {
+      const labels = { pending: 'Menunggu', missed: 'Terlewat' };
+      statusCell.append(element('span', labels[entry.status], `badge ${entry.status}`));
+    }
     fragment.append(tr);
   }
   $('sessionBody').replaceChildren(fragment);

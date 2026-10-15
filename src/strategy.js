@@ -30,3 +30,14 @@ export function predict(history, random = Math.random) {
   if (recent) return { prediction: recent, method: 'mayoritas-30' };
   return { prediction: majority(history) || 'Besar', method: 'mayoritas-all' };
 }
+
+// Prediksi keempat metode sekaligus untuk satu ronde. Nilai null berarti
+// metode abstain (tidak punya sinyal) dan tidak dihitung menang/kalah.
+export function predictAll(history, random = Math.random) {
+  return {
+    'pola-6': patternPrediction(history),
+    'mayoritas-30': majority(history.slice(0, 30)),
+    'mayoritas-all': majority(history) || 'Besar',
+    acak: random() > 0.5 ? 'Besar' : 'Kecil',
+  };
+}
