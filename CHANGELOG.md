@@ -15,6 +15,10 @@
 
 ### Fixed
 
+- Pola-6 tidak lagi menyambung periode arsip yang hilang, memakai hasil lama untuk target yang terputus, atau menghitung contoh bertumpuk sebagai dukungan terpisah.
+- Mayoritas seri/kosong abstain; tidak otomatis memilih Besar. Prediksi yang sudah dicatat dan hasil sesi lama tidak ditulis ulang.
+- Backtest memakai fungsi empat metode yang sama dengan simulator dan menampilkan jumlah abstain; hasil pola tidak lagi diganti diam-diam oleh mayoritas.
+
 - Koneksi awal gagal kini dicoba ulang; polling tidak bertumpuk dan berhenti saat tab tidak aktif.
 - Hasil dicocokkan menggunakan ID periode lengkap, bukan lima digit terakhir.
 - Nomor periode tidak lagi dinaikkan berdasarkan jam perangkat.

@@ -37,7 +37,7 @@ test('per-method totals are persisted and match cumulative session totals', () =
   const history = rows(Array(40).fill(8));
   advanceSession(
     session,
-    { issue: '20261015000000001', list: [], fetchedAt: 1000, expiresAt: 25000 },
+    { issue: '20261014000000040', list: [], fetchedAt: 1000, expiresAt: 25000 },
     () => 0.1,
     history,
   );
@@ -45,8 +45,8 @@ test('per-method totals are persisted and match cumulative session totals', () =
   advanceSession(
     session,
     {
-      issue: '20261015000000002',
-      list: [{ issueNumber: '20261015000000001', hasil: 8 }],
+      issue: '20261014000000041',
+      list: [{ issueNumber: '20261014000000040', hasil: 8 }],
       fetchedAt: 1000,
       expiresAt: 25000,
     },

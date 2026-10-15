@@ -271,6 +271,8 @@ test('archive seeds analytics and worker backtest completes without blocking the
   await expect(page.locator('#patternStrip span')).toHaveCount(20);
   await page.getByRole('button', { name: 'Jalankan backtest' }).click();
   await expect(page.locator('#backtestBody tr')).toHaveCount(4);
+  await expect(page.locator('#backtestBody tr').first().locator('td')).toHaveCount(5);
+  await expect(page.locator('#backtestBody')).toContainText('mayoritas-all');
   await expect(page.locator('#backtestMeta')).toContainText('160 sampel');
   await page.getByRole('tab', { name: 'Edukasi', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Backtest bukan janji akurasi' })).toBeVisible();

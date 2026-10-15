@@ -147,8 +147,9 @@ export function advanceSession(state, data, random = Math.random, history = []) 
     data.expiresAt - data.fetchedAt > 3000
   ) {
     const picks = predictAll(
-      history.filter((row) => compareIssues(row.p, issue) < 0),
+      mergeHistory(history, [], Infinity).filter((row) => compareIssues(row.p, issue) < 0),
       random,
+      issue,
     );
     state.rows.unshift({
       issue,

@@ -71,7 +71,9 @@ Timeout penyedia 8 detik, timeout browser 12 detik. Poll berikut dijadwalkan 2 d
 
 ## Metode dan backtest
 
-Simulasi mengikuti metode yang ada di main: **pola-6** mencocokkan enam kategori terbaru dengan jendela riwayat yang lebih tua, memakai mayoritas kategori sesudah kecocokan bila sedikitnya tiga cocok. Seri atau sampel kurang memakai **mayoritas-30**, kemudian **mayoritas-all**; tanpa riwayat dipakai **acak**. Hanya hasil dengan ID lebih kecil dari periode aktif boleh masuk prediksi. Tabel kinerja per metode bersifat kumulatif sepanjang sesi.
+Simulator menjalankan **pola-6**, **mayoritas-30**, **mayoritas-all**, dan **acak** secara paralel. Pola-6 hanya mencocokkan enam periode berurutan, dengan hasil sesudah contoh yang juga berurutan. Minimal tiga contoh harus tidak bertumpuk dan tidak memakai baris query. Periode aktif harus tepat sesudah periode terbaru; celah arsip atau pergantian ID yang tidak bisa dipastikan memutus konteks pola. Minimum tiga contoh adalah aturan ketersediaan data, bukan bukti keunggulan statistik.
+
+Mayoritas-30 menghitung 30 sampel terbaru; mayoritas-all memakai seluruh sampel tersedia (keduanya bisa mencakup celah waktu). Saat seri atau kosong, metode tersebut abstain. Acak tetap menjadi pembanding. Hanya hasil dengan ID lebih kecil dari periode aktif boleh masuk prediksi. Prediksi dikunci sebelum hasil dan tidak diubah ketika arsip diperbarui. Penghitung sesi lama tetap dipertahankan; mulai sesi baru bila ingin mengukur aturan baru secara terpisah.
 
 Tab **Pola** menyediakan backtest dalam Web Worker pada maksimal 2.000 sampel terbaru. Untuk seluruh dataset:
 
@@ -79,7 +81,11 @@ Tab **Pola** menyediakan backtest dalam Web Worker pada maksimal 2.000 sampel te
 node backtest-pola.js data/riwayat.json
 ```
 
-Uji memakai warmup 100, seed acak tetap 20261014, dan hanya hasil sebelum ronde yang dinilai. Empat metode dibandingkan: pola-6, mayoritas-30, ikut-streak, acak. Baseline backtest mengikuti kategori terakhir saat mayoritas seri, sesuai skrip sebelumnya; simulasi live memiliki fallback mayoritas-all. Persentase dihitung dari dataset saat dijalankan, tidak dihardcode sebagai janji akurasi.
+Uji memakai warmup 100, seed acak tetap 20261014, dan fungsi `predictAll` yang sama dengan simulator. Setiap target hanya melihat hasil yang lebih lama. Empat metode dibandingkan: pola-6, mayoritas-30, mayoritas-all, acak. Jumlah abstain ditampilkan terpisah; akurasi adalah benar / prediksi yang dibuat, bukan benar / seluruh ronde. Bandingkan cakupan juga: metode yang banyak abstain diuji pada subset berbeda. Tidak ada fallback tersembunyi pada hasil backtest pola.
+
+Pemisahan waktu mengikuti prinsip evaluasi data berurutan dalam [dokumentasi TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html); implementasi di sini mandiri, tidak memakai scikit-learn. Data arsip memiliki celah, sehingga tidak diperlakukan sebagai rangkaian ronde lengkap.
+
+Pemeriksaan 15 Oktober 2026 pada arsip commit `7b11491`: 1.685 hasil, 160 celah, 100 warmup, 1.585 target uji. Aturan pola baru menghasilkan 258 benar dari 475 prediksi (54,32%), dengan 1.110 abstain. Aturan live sebelumnya menghasilkan 708/1.342 (52,76%) pada dataset yang sama, tetapi cakupannya berbeda sehingga angka ini **bukan bukti peningkatan**. Mayoritas-30 676/1.390 (48,63%), mayoritas-all 742/1.533 (48,40%), acak berseed 785/1.585 (49,53%). Tidak ada klaim bahwa hasil di luar sampel akan lebih baik; validasi prospektif masih diperlukan.
 
 ## Kolektor arsip
 

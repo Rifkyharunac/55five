@@ -188,7 +188,10 @@
                 <p>
                   Keempat metode (pola-6, mayoritas-30, mayoritas-all, acak) masing-masing memberi
                   satu prediksi di setiap periode dan dinilai terpisah. Metode yang tidak punya
-                  sinyal pada suatu ronde abstain dan tidak dihitung. Semua berupa eksperimen.
+                  sinyal pada suatu ronde abstain dan tidak dihitung. Pola hanya memakai periode
+                  berurutan dan minimal tiga contoh yang tidak bertumpuk; seri tidak dipaksa menjadi
+                  Besar. Mayoritas memakai sampel tersimpan, bukan bukti peluang ronde berikutnya.
+                  Semua berupa eksperimen.
                 </p>
                 <div
                   class="table-scroll"
@@ -396,9 +399,10 @@
                   </div>
                   <p class="chart-note" id="backtestHint">Perlu lebih dari 100 hasil.</p>
                   <p class="chart-note">
-                    Walk-forward: setiap tebakan hanya memakai hasil yang lebih lama. Baseline
-                    mayoritas-30 pada backtest mengikuti hasil terakhir saat seri. Angka dihitung
-                    ulang, bukan klaim akurasi tetap.
+                    Walk-forward: setiap tebakan hanya memakai hasil yang lebih lama dengan aturan
+                    empat metode yang sama seperti simulasi langsung. Abstain ditampilkan terpisah;
+                    akurasi hanya menghitung prediksi yang dibuat. Bandingkan juga jumlah
+                    prediksinya.
                   </p>
                   <div id="backtestResult" hidden>
                     <p id="backtestMeta" class="analysis-note" role="status"></p>
@@ -417,6 +421,7 @@
                             <th scope="col">Metode</th>
                             <th scope="col">Prediksi</th>
                             <th scope="col">Benar</th>
+                            <th scope="col">Abstain</th>
                             <th scope="col">Akurasi</th>
                           </tr>
                         </thead>

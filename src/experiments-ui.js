@@ -77,6 +77,7 @@ export function setupBacktest(getHistory, toast) {
             result.method,
             result.total,
             result.correct,
+            result.abstained,
             result.accuracy === null ? '—' : `${result.accuracy}%`,
           ]) {
             const td = document.createElement('td');

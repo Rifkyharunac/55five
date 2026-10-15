@@ -1,6 +1,6 @@
 import { category } from './data.js';
 import { mergeHistory, statistics } from './model.js';
-import { patternPrediction, majority } from './strategy.js';
+import { predictAll, METHODS } from './strategy.js';
 export { predict } from './strategy.js';
 
 export function analyzePatterns(history) {
@@ -41,25 +41,24 @@ function seededRandom(seed) {
 export function backtest(history, { warmup = 100, seed = 20261014 } = {}) {
   const rows = mergeHistory(history, [], Infinity).reverse();
   const random = seededRandom(seed);
-  const comparison = ['pola-6', 'mayoritas-30', 'ikut-streak', 'acak'].map((method) => ({
+  const comparison = METHODS.map((method) => ({
     method,
     correct: 0,
     total: 0,
+    abstained: 0,
     accuracy: null,
   }));
   for (let t = warmup; t < rows.length; t++) {
     const past = rows.slice(0, t).reverse();
-    const last = category(past[0].h);
-    const baseline = majority(past.slice(0, 30)) || last;
-    const predictions = [
-      patternPrediction(past) || baseline,
-      baseline,
-      last,
-      random() > 0.5 ? 'Besar' : 'Kecil',
-    ];
-    comparison.forEach((result, index) => {
+    const predictions = predictAll(past, random, rows[t].p);
+    comparison.forEach((result) => {
+      const pick = predictions[result.method];
+      if (pick === null) {
+        result.abstained++;
+        return;
+      }
       result.total++;
-      if (predictions[index] === category(rows[t].h)) result.correct++;
+      if (pick === category(rows[t].h)) result.correct++;
     });
   }
   for (const result of comparison)
