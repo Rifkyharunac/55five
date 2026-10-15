@@ -41,7 +41,7 @@ test('per-method totals are persisted and match cumulative session totals', () =
     () => 0.1,
     history,
   );
-  assert.equal(session.rows[0].method, 'pola-6');
+  assert.equal(session.rows[0].picks['pola-6'], 'Besar');
   advanceSession(
     session,
     {
@@ -69,6 +69,5 @@ test('live predictions exclude archive results at or after the current issue', (
     () => 0.9,
     [...future, ...past],
   );
-  assert.equal(session.rows[0].prediction, 'Kecil');
-  assert.equal(session.rows[0].method, 'mayoritas-30');
+  assert.equal(session.rows[0].picks['mayoritas-30'], 'Kecil');
 });

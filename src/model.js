@@ -1,15 +1,18 @@
 import { issueId, digit, category, colors, compareIssues } from './data.js';
-import { predict, METHODS } from './strategy.js';
+import { predictAll, METHODS } from './strategy.js';
 
 export const HISTORY_LIMIT = 500;
 export const INITIAL_BALANCE = 1000;
 export const STAKE = 10;
 
+const PICK_VALUES = ['Besar', 'Kecil', null];
+
 export function newSession() {
   return {
-    version: 2,
+    version: 3,
     currentIssue: null,
     rows: [],
+    rounds: 0,
     win: 0,
     lose: 0,
     missed: 0,
@@ -18,13 +21,21 @@ export function newSession() {
   };
 }
 
+function validPicks(picks) {
+  return (
+    picks &&
+    typeof picks === 'object' &&
+    METHODS.every((method) => PICK_VALUES.includes(picks[method]))
+  );
+}
+
 export function restoreSession(value) {
   if (
     !value ||
-    value.version !== 2 ||
+    value.version !== 3 ||
     !Array.isArray(value.rows) ||
     value.rows.length > HISTORY_LIMIT ||
-    !['win', 'lose', 'missed'].every(
+    !['rounds', 'win', 'lose', 'missed'].every(
       (key) => Number.isSafeInteger(value[key]) && value[key] >= 0,
     ) ||
     !Number.isFinite(value.createdAt) ||
@@ -33,70 +44,63 @@ export function restoreSession(value) {
   )
     return newSession();
   const seen = new Set();
+  let scored = 0;
   for (const row of value.rows) {
     if (
       !row ||
       typeof row.issue !== 'string' ||
       !issueId(row.issue) ||
-      !['Besar', 'Kecil'].includes(row.prediction) ||
-      !['pending', 'win', 'lose', 'missed'].includes(row.status) ||
-      (row.method !== undefined && !METHODS.includes(row.method)) ||
+      !validPicks(row.picks) ||
+      !['pending', 'scored', 'missed'].includes(row.status) ||
       seen.has(row.issue) ||
       !value.currentIssue ||
       compareIssues(row.issue, value.currentIssue) > 0 ||
-      (['win', 'lose'].includes(row.status) &&
-        (digit(row.result) === null ||
-          (category(row.result) === row.prediction ? 'win' : 'lose') !== row.status))
+      (row.status === 'scored' ? digit(row.result) === null : row.result !== null)
     )
       return newSession();
     seen.add(row.issue);
+    if (row.status === 'scored') scored++;
   }
+  // Totals are cumulative while rows are capped at HISTORY_LIMIT, so only the
+  // weaker invariant (cumulative >= retained) can be checked, plus internal
+  // consistency: per-method sums match the grand totals and no method can have
+  // more than one outcome per scored round.
   if (
-    ['win', 'lose', 'missed'].some(
-      (key) => value[key] < value.rows.filter((row) => row.status === key).length,
-    )
-  )
-    return newSession();
-  const methods =
-    value.methods ??
-    Object.fromEntries(
-      METHODS.map((method) => [
-        method,
-        {
-          win: method === 'acak' ? value.win : 0,
-          lose: method === 'acak' ? value.lose : 0,
-        },
-      ]),
-    );
-  if (
+    value.rounds < scored ||
+    value.missed < value.rows.filter((row) => row.status === 'missed').length ||
     METHODS.some(
       (method) =>
-        !methods[method] ||
+        !value.methods?.[method] ||
         ['win', 'lose'].some(
-          (key) => !Number.isSafeInteger(methods[method][key]) || methods[method][key] < 0,
-        ),
+          (key) =>
+            !Number.isSafeInteger(value.methods[method][key]) || value.methods[method][key] < 0,
+        ) ||
+        value.methods[method].win + value.methods[method].lose > value.rounds,
     ) ||
     ['win', 'lose'].some(
-      (key) => METHODS.reduce((sum, method) => sum + methods[method][key], 0) !== value[key],
+      (key) => METHODS.reduce((sum, method) => sum + value.methods[method][key], 0) !== value[key],
     )
   )
     return newSession();
   return {
-    version: 2,
+    version: 3,
     currentIssue: value.currentIssue,
     createdAt: value.createdAt,
+    rounds: value.rounds,
     win: value.win,
     lose: value.lose,
     missed: value.missed,
     methods: Object.fromEntries(
-      METHODS.map((method) => [method, { win: methods[method].win, lose: methods[method].lose }]),
+      METHODS.map((method) => [
+        method,
+        { win: value.methods[method].win, lose: value.methods[method].lose },
+      ]),
     ),
     rows: value.rows.map((row) => ({
       issue: row.issue,
-      prediction: row.prediction,
-      method: row.method || 'acak',
+      picks: Object.fromEntries(METHODS.map((method) => [method, row.picks[method]])),
       status: row.status,
-      result: ['win', 'lose'].includes(row.status) ? Number(row.result) : null,
+      result: row.status === 'scored' ? Number(row.result) : null,
     })),
   };
 }
@@ -115,9 +119,16 @@ export function advanceSession(state, data, random = Math.random, history = []) 
     if (row.status !== 'pending') continue;
     if (results.has(row.issue)) {
       row.result = results.get(row.issue);
-      row.status = category(row.result) === row.prediction ? 'win' : 'lose';
-      state[row.status]++;
-      state.methods[row.method || 'acak'][row.status]++;
+      const actual = category(row.result);
+      for (const method of METHODS) {
+        const pick = row.picks[method];
+        if (pick === null) continue;
+        const outcome = actual === pick ? 'win' : 'lose';
+        state[outcome]++;
+        state.methods[method][outcome]++;
+      }
+      row.status = 'scored';
+      state.rounds++;
       changed = true;
     } else if (oldest && compareIssues(row.issue, oldest) < 0) {
       row.status = 'missed';
@@ -135,13 +146,13 @@ export function advanceSession(state, data, random = Math.random, history = []) 
     Number.isFinite(data.expiresAt) &&
     data.expiresAt - data.fetchedAt > 3000
   ) {
-    const estimate = predict(
+    const picks = predictAll(
       history.filter((row) => compareIssues(row.p, issue) < 0),
       random,
     );
     state.rows.unshift({
       issue,
-      ...estimate,
+      picks,
       status: 'pending',
       result: null,
     });

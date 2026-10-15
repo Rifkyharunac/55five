@@ -25,12 +25,19 @@ test('keeps cumulative totals after the visible and retained row limits, and rel
   for (let i = 1; i <= 550; i++) {
     advanceSession(state, snapshot(id(i), i > 1 ? [result(id(i - 1), 8)] : []), () => 0.9);
   }
-  assert.equal(state.win, 549);
+  // Empty history: pola-6 and mayoritas-30 abstain; mayoritas-all and acak bet 'Besar' and win.
+  assert.equal(state.win, 549 * 2);
+  assert.equal(state.lose, 0);
+  assert.equal(state.rounds, 549);
+  assert.equal(state.methods['mayoritas-all'].win, 549);
+  assert.equal(state.methods.acak.win, 549);
+  assert.equal(state.methods['pola-6'].win + state.methods['pola-6'].lose, 0);
   assert.equal(state.rows.length, 500);
   const restored = restoreSession(JSON.parse(JSON.stringify(state)));
   advanceSession(restored, snapshot(id(550), [result(id(549), 8)]));
-  assert.equal(restored.win, 549);
+  assert.equal(restored.win, 549 * 2);
   assert.equal(restored.lose, 0);
+  assert.equal(restored.rounds, 549);
 });
 test('settles each prediction once and ignores older snapshots', () => {
   const state = newSession();
@@ -38,8 +45,43 @@ test('settles each prediction once and ignores older snapshots', () => {
   advanceSession(state, snapshot(id(3), [result(id(2), 9)]), () => 0.1);
   advanceSession(state, snapshot(id(1), [result(id(2), 9)]));
   assert.equal(state.currentIssue, id(3));
+  // mayoritas-all bet 'Besar' (win), acak bet 'Kecil' (lose); the rest abstained.
+  assert.equal(state.win, 1);
   assert.equal(state.lose, 1);
+  assert.equal(state.rounds, 1);
   assert.equal(state.rows.length, 2);
+});
+test('scores all four methods independently on every round', () => {
+  const state = newSession();
+  const past = Array.from({ length: 20 }, (_, i) => ({ p: id(i + 1), h: 8 }));
+  advanceSession(state, snapshot(id(21)), () => 0.9, past);
+  assert.deepEqual(state.rows[0].picks, {
+    'pola-6': 'Besar',
+    'mayoritas-30': 'Besar',
+    'mayoritas-all': 'Besar',
+    acak: 'Besar',
+  });
+  advanceSession(state, snapshot(id(22), [result(id(21), 3)]), () => 0.9, past);
+  assert.equal(state.rounds, 1);
+  assert.equal(state.win, 0);
+  assert.equal(state.lose, 4);
+  for (const method of ['pola-6', 'mayoritas-30', 'mayoritas-all', 'acak']) {
+    assert.equal(state.methods[method].lose, 1);
+  }
+  const restored = restoreSession(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.rounds, 1);
+  assert.equal(restored.lose, 4);
+});
+test('abstaining methods are not counted as wins or losses', () => {
+  const state = newSession();
+  advanceSession(state, snapshot(id(1)), () => 0.9);
+  assert.equal(state.rows[0].picks['pola-6'], null);
+  assert.equal(state.rows[0].picks['mayoritas-30'], null);
+  advanceSession(state, snapshot(id(2), [result(id(1), 8)]));
+  assert.equal(state.methods['pola-6'].win + state.methods['pola-6'].lose, 0);
+  assert.equal(state.methods['mayoritas-30'].win + state.methods['mayoritas-30'].lose, 0);
+  assert.equal(state.win, 2);
+  assert.equal(state.lose, 0);
 });
 test('does not create predictions without reliable remaining time', () => {
   const state = newSession();
