@@ -1,4 +1,4 @@
-import { category, colors } from './data.js';
+import { category, colors, issueDayLabel } from './data.js';
 import { INITIAL_BALANCE, STAKE, statistics } from './model.js';
 
 export const $ = (id) => document.getElementById(id);
@@ -48,7 +48,7 @@ export function renderSession(session) {
   text('scSaldo', number(INITIAL_BALANCE + STAKE * (session.win - session.lose)));
   text(
     'sessionMeta',
-    `Sesi tab ini · 4 metode dinilai tiap ronde · ${number(session.missed)} terlewat · total tetap tersimpan`,
+    `Sesi tab ini · 4 metode dinilai tiap ronde · ${number(session.missed)} terlewat (tidak terpantau, bukan kalah) · total tetap tersimpan`,
   );
   text('sessionCount', `${Math.min(30, session.rows.length)} catatan terbaru`);
   $('sessionEmpty').hidden = session.rows.length > 0;
@@ -56,7 +56,8 @@ export function renderSession(session) {
   for (const entry of session.rows.slice(0, 30)) {
     const tr = element('tr');
     const issue = cell(tr, entry.issue.slice(-5));
-    issue.append(element('small', entry.issue));
+    issue.title = entry.issue;
+    issue.append(element('small', issueDayLabel(entry.issue)));
     const predictionCell = cell(tr, picksSummary(entry.picks));
     predictionCell.append(element('small', picksDetail(entry.picks)));
     cell(tr, entry.result === null ? '—' : `${entry.result} · ${category(entry.result)}`);
@@ -78,7 +79,14 @@ export function renderSession(session) {
       }
     } else {
       const labels = { pending: 'Menunggu', missed: 'Terlewat' };
-      statusCell.append(element('span', labels[entry.status], `badge ${entry.status}`));
+      const hints = {
+        pending: 'Ronde berjalan — menunggu hasil resmi dari penyedia.',
+        missed:
+          'Ronde tidak terpantau (tab tidak aktif / pembaruan dijeda) — tidak dihitung menang maupun kalah.',
+      };
+      const badge = element('span', labels[entry.status], `badge ${entry.status}`);
+      badge.title = hints[entry.status];
+      statusCell.append(badge);
     }
     fragment.append(tr);
   }

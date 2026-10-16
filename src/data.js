@@ -7,6 +7,33 @@ export function compareIssues(a, b) {
   return a.length - b.length || a.localeCompare(b);
 }
 
+const MONTHS_ID = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+];
+
+// Nomor urut periode di-reset tiap hari oleh penyedia, jadi 5 digit terakhir
+// saja bisa terlihat "mundur" saat sesi melewati tengah malam.
+// Label tanggal ini membuat urutan antar-hari jelas di log sesi.
+export function issueDayLabel(value) {
+  const id = issueId(value);
+  if (!id || id.length < 8) return '';
+  const day = Number(id.slice(6, 8));
+  const month = Number(id.slice(4, 6));
+  if (!(day >= 1 && day <= 31 && month >= 1 && month <= 12)) return id.slice(0, 8);
+  return `${day} ${MONTHS_ID[month - 1]}`;
+}
+
 export function digit(value) {
   if (typeof value === 'string' && /^\d$/.test(value)) value = Number(value);
   return Number.isInteger(value) && value >= 0 && value <= 9 ? value : null;
