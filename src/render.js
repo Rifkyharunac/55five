@@ -26,11 +26,16 @@ const SHORT_METHOD = {
   acak: 'acak',
 };
 
-function picksSummary(picks) {
+export function picksSummary(picks) {
   const counts = { Besar: 0, Kecil: 0 };
   for (const pick of Object.values(picks)) if (pick) counts[pick]++;
-  const parts = ['Besar', 'Kecil'].filter((name) => counts[name] > 0);
-  return parts.length ? parts.map((name) => `${name} ×${counts[name]}`).join(' · ') : '—';
+  // Notasi "×N" sengaja dihindari: terbaca seperti pengali taruhan.
+  // Ini murni hitungan suara — berapa metode memilih sisi yang sama —
+  // suara terbanyak ditampilkan dulu.
+  const parts = ['Besar', 'Kecil']
+    .filter((name) => counts[name] > 0)
+    .sort((a, b) => counts[b] - counts[a]);
+  return parts.length ? parts.map((name) => `${name} (${counts[name]} suara)`).join(' · ') : '—';
 }
 
 function picksDetail(picks) {
