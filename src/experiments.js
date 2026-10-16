@@ -1,6 +1,6 @@
 import { category } from './data.js';
 import { mergeHistory, statistics } from './model.js';
-import { predictAll, METHODS } from './strategy.js';
+import { predictAll, METHODS, primaryDecision } from './strategy.js';
 export { predict } from './strategy.js';
 
 export function analyzePatterns(history) {
@@ -48,10 +48,12 @@ export function backtest(history, { warmup = 100, seed = 20261014 } = {}) {
     abstained: 0,
     accuracy: null,
   }));
+  const primary = { method: 'utama', correct: 0, total: 0, abstained: 0, accuracy: null };
   for (let t = warmup; t < rows.length; t++) {
     const past = rows.slice(0, t).reverse();
     const predictions = predictAll(past, random, rows[t].p);
-    comparison.forEach((result) => {
+    predictions.utama = primaryDecision(predictions);
+    [primary, ...comparison].forEach((result) => {
       const pick = predictions[result.method];
       if (pick === null) {
         result.abstained++;
@@ -61,9 +63,9 @@ export function backtest(history, { warmup = 100, seed = 20261014 } = {}) {
       if (pick === category(rows[t].h)) result.correct++;
     });
   }
-  for (const result of comparison)
+  for (const result of [primary, ...comparison])
     result.accuracy = result.total
       ? Number(((100 * result.correct) / result.total).toFixed(2))
       : null;
-  return { rounds: rows.length, warmup, seed, comparison };
+  return { rounds: rows.length, warmup, seed, primary, comparison };
 }

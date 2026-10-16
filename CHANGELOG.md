@@ -1,5 +1,12 @@
 # Changelog
 
+## 16 Oktober 2026 — Prediksi utama
+
+- Satu arah utama per periode, dari kesepakatan minimal dua metode riwayat; acak hanya pembanding. Belum sepakat ditampilkan sebagai Tidak ada arah.
+- Ringkasan dan saldo demo menghitung maksimal satu WIN/LOSE per periode. Rincian metode dibuka lewat Lihat metode; perbandingan kinerja bersifat opsional.
+- Migrasi sesi v3 ke v4 mempertahankan arsip dan total metode lama. Penghitung utama dimulai dari nol, tanpa menghitung ulang prediksi lama.
+- Backtest menguji aturan utama yang sama, di samping empat metode pembanding.
+
 ## 2.0.0 — Belum dirilis
 
 ### Added

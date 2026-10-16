@@ -41,7 +41,7 @@ export function renderExperiments(history) {
     'backtestHint',
     history.length <= 100
       ? 'Perlu lebih dari 100 hasil untuk melewati warmup.'
-      : 'Bandingkan 4 metode pada maksimal 2.000 hasil terbaru.',
+      : 'Bandingkan prediksi utama dan 4 metode pada maksimal 2.000 hasil terbaru.',
   );
 }
 
@@ -71,10 +71,10 @@ export function setupBacktest(getHistory, toast) {
           toast(data.error);
           return;
         }
-        const rows = data.result.comparison.map((result) => {
+        const rows = [data.result.primary, ...data.result.comparison].map((result) => {
           const tr = document.createElement('tr');
           for (const value of [
-            result.method,
+            result.method === 'utama' ? 'Prediksi utama' : result.method,
             result.total,
             result.correct,
             result.abstained,

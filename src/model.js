@@ -1,5 +1,5 @@
 import { issueId, digit, category, colors, compareIssues } from './data.js';
-import { predictAll, METHODS } from './strategy.js';
+import { predictAll, METHODS, primaryDecision } from './strategy.js';
 
 export const HISTORY_LIMIT = 500;
 export const INITIAL_BALANCE = 1000;
@@ -9,7 +9,8 @@ const PICK_VALUES = ['Besar', 'Kecil', null];
 
 export function newSession() {
   return {
-    version: 3,
+    version: 4,
+    primary: { win: 0, lose: 0, abstained: 0, missed: 0 },
     currentIssue: null,
     rows: [],
     rounds: 0,
@@ -32,7 +33,7 @@ function validPicks(picks) {
 export function restoreSession(value) {
   if (
     !value ||
-    value.version !== 3 ||
+    ![3, 4].includes(value.version) ||
     !Array.isArray(value.rows) ||
     value.rows.length > HISTORY_LIMIT ||
     !['rounds', 'win', 'lose', 'missed'].every(
@@ -51,6 +52,10 @@ export function restoreSession(value) {
       typeof row.issue !== 'string' ||
       !issueId(row.issue) ||
       !validPicks(row.picks) ||
+      (row.legacy !== undefined && typeof row.legacy !== 'boolean') ||
+      (value.version === 4 &&
+        row.legacy !== true &&
+        (!PICK_VALUES.includes(row.decision) || row.decision !== primaryDecision(row.picks))) ||
       !['pending', 'scored', 'missed'].includes(row.status) ||
       seen.has(row.issue) ||
       !value.currentIssue ||
@@ -82,8 +87,39 @@ export function restoreSession(value) {
     )
   )
     return newSession();
+  const primary =
+    value.version === 3 ? { win: 0, lose: 0, abstained: 0, missed: 0 } : value.primary;
+  if (
+    !primary ||
+    !['win', 'lose', 'abstained', 'missed'].every(
+      (key) => Number.isSafeInteger(primary[key]) && primary[key] >= 0,
+    )
+  )
+    return newSession();
+  const retained = { win: 0, lose: 0, abstained: 0, missed: 0 };
+  if (value.version === 4)
+    for (const row of value.rows) {
+      if (row.legacy) continue;
+      if (row.status === 'missed') retained.missed++;
+      if (row.status === 'scored') {
+        const outcome =
+          row.decision === null
+            ? 'abstained'
+            : category(row.result) === row.decision
+              ? 'win'
+              : 'lose';
+        retained[outcome]++;
+      }
+    }
+  if (
+    Object.keys(retained).some((key) => primary[key] < retained[key]) ||
+    primary.win + primary.lose + primary.abstained > value.rounds ||
+    primary.missed > value.missed
+  )
+    return newSession();
   return {
-    version: 3,
+    version: 4,
+    primary: { ...primary },
     currentIssue: value.currentIssue,
     createdAt: value.createdAt,
     rounds: value.rounds,
@@ -98,6 +134,9 @@ export function restoreSession(value) {
     ),
     rows: value.rows.map((row) => ({
       issue: row.issue,
+      ...(value.version === 3 || row.legacy === true
+        ? { legacy: true }
+        : { decision: row.decision }),
       picks: Object.fromEntries(METHODS.map((method) => [method, row.picks[method]])),
       status: row.status,
       result: row.status === 'scored' ? Number(row.result) : null,
@@ -127,12 +166,18 @@ export function advanceSession(state, data, random = Math.random, history = []) 
         state[outcome]++;
         state.methods[method][outcome]++;
       }
+      if (!row.legacy) {
+        const outcome =
+          row.decision === null ? 'abstained' : actual === row.decision ? 'win' : 'lose';
+        state.primary[outcome]++;
+      }
       row.status = 'scored';
       state.rounds++;
       changed = true;
     } else if (oldest && compareIssues(row.issue, oldest) < 0) {
       row.status = 'missed';
       state.missed++;
+      if (!row.legacy) state.primary.missed++;
       changed = true;
     }
   }
@@ -154,11 +199,13 @@ export function advanceSession(state, data, random = Math.random, history = []) 
     state.rows.unshift({
       issue,
       picks,
+      decision: primaryDecision(picks),
       status: 'pending',
       result: null,
     });
     const removed = state.rows.splice(HISTORY_LIMIT);
     state.missed += removed.filter((row) => row.status === 'pending').length;
+    state.primary.missed += removed.filter((row) => row.status === 'pending' && !row.legacy).length;
     changed = true;
   }
   return changed;

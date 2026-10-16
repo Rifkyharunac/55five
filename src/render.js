@@ -26,18 +26,6 @@ const SHORT_METHOD = {
   acak: 'acak',
 };
 
-export function picksSummary(picks) {
-  const counts = { Besar: 0, Kecil: 0 };
-  for (const pick of Object.values(picks)) if (pick) counts[pick]++;
-  // Notasi "×N" sengaja dihindari: terbaca seperti pengali taruhan.
-  // Ini murni hitungan suara — berapa metode memilih sisi yang sama —
-  // suara terbanyak ditampilkan dulu.
-  const parts = ['Besar', 'Kecil']
-    .filter((name) => counts[name] > 0)
-    .sort((a, b) => counts[b] - counts[a]);
-  return parts.length ? parts.map((name) => `${name} (${counts[name]} suara)`).join(' · ') : '—';
-}
-
 function picksDetail(picks) {
   return Object.entries(picks)
     .map(([method, pick]) => `${SHORT_METHOD[method]}: ${pick ?? '–'}`)
@@ -45,16 +33,18 @@ function picksDetail(picks) {
 }
 
 export function renderSession(session) {
-  const total = session.win + session.lose;
-  text('scTotal', number(session.rounds ?? 0));
-  text('scWin', `${number(session.win)} WIN`);
-  text('scLose', `${number(session.lose)} LOSE`);
-  text('scRate', total ? `${((100 * session.win) / total).toFixed(1).replace('.', ',')}%` : '—');
-  text('scSaldo', number(INITIAL_BALANCE + STAKE * (session.win - session.lose)));
+  const primary = session.primary;
+  const total = primary.win + primary.lose;
+  text('scTotal', number(total));
+  text('scWin', `${number(primary.win)} WIN`);
+  text('scLose', `${number(primary.lose)} LOSE`);
+  text('scRate', total ? `${((100 * primary.win) / total).toFixed(1).replace('.', ',')}%` : '—');
+  text('scSaldo', number(INITIAL_BALANCE + STAKE * (primary.win - primary.lose)));
   text(
     'sessionMeta',
-    `Sesi tab ini · 4 metode dinilai tiap ronde · ${number(session.missed)} terlewat (tidak terpantau, bukan kalah) · total tetap tersimpan`,
+    `Satu hasil per prediksi utama · ${number(primary.abstained)} tanpa arah · ${number(primary.missed)} terlewat`,
   );
+  $('legacySessionNotice').hidden = !session.rows.some((row) => row.legacy);
   text('sessionCount', `${Math.min(30, session.rows.length)} catatan terbaru`);
   $('sessionEmpty').hidden = session.rows.length > 0;
   const fragment = document.createDocumentFragment();
@@ -63,36 +53,44 @@ export function renderSession(session) {
     const issue = cell(tr, entry.issue.slice(-5));
     issue.title = entry.issue;
     issue.append(element('small', issueDayLabel(entry.issue)));
-    const predictionCell = cell(tr, picksSummary(entry.picks));
-    predictionCell.append(element('small', picksDetail(entry.picks)));
+    const predictionCell = cell(
+      tr,
+      entry.legacy ? 'Versi lama' : (entry.decision ?? 'Tidak ada arah'),
+    );
+    predictionCell.append(
+      element(
+        'small',
+        entry.legacy
+          ? 'Tidak masuk ringkasan utama'
+          : entry.decision
+            ? 'Kesepakatan metode riwayat'
+            : 'Kesepakatan belum cukup',
+      ),
+    );
+    const details = element('details');
+    details.append(element('summary', 'Lihat metode'));
+    details.append(element('small', picksDetail(entry.picks)));
+    predictionCell.append(details);
     cell(tr, entry.result === null ? '—' : `${entry.result} · ${category(entry.result)}`);
-    const statusCell = element('td');
-    tr.append(statusCell);
-    if (entry.status === 'scored') {
-      let win = 0,
-        lose = 0;
-      const actual = category(entry.result);
-      for (const [method, pick] of Object.entries(entry.picks)) {
-        if (pick === null) continue;
-        if (actual === pick) win++;
-        else lose++;
-      }
-      if (win) statusCell.append(element('span', `${win} WIN`, 'badge win'));
-      if (lose) {
-        if (win) statusCell.append(document.createTextNode(' '));
-        statusCell.append(element('span', `${lose} LOSE`, 'badge lose'));
-      }
+    let label, status;
+    if (entry.legacy) {
+      label = 'Arsip lama';
+      status = 'missed';
+    } else if (entry.decision === null) {
+      label = 'Tidak dinilai';
+      status = 'missed';
+    } else if (entry.status === 'scored') {
+      const won = category(entry.result) === entry.decision;
+      label = won ? 'WIN' : 'LOSE';
+      status = won ? 'win' : 'lose';
     } else {
-      const labels = { pending: 'Menunggu', missed: 'Terlewat' };
-      const hints = {
-        pending: 'Ronde berjalan — menunggu hasil resmi dari penyedia.',
-        missed:
-          'Ronde tidak terpantau (tab tidak aktif / pembaruan dijeda) — tidak dihitung menang maupun kalah.',
-      };
-      const badge = element('span', labels[entry.status], `badge ${entry.status}`);
-      badge.title = hints[entry.status];
-      statusCell.append(badge);
+      label = entry.status === 'pending' ? 'Menunggu' : 'Terlewat';
+      status = entry.status;
     }
+    const badge = element('span', label, `badge ${status}`);
+    if (entry.status === 'missed')
+      badge.title = 'Hasil tidak tersedia; tidak dihitung menang atau kalah.';
+    cell(tr, badge);
     fragment.append(tr);
   }
   $('sessionBody').replaceChildren(fragment);

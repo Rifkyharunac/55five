@@ -32,7 +32,7 @@ Riwayat hasil disimpan dalam `localStorage` (`five55_history_v2`), maksimal 500 
 
 Simulasi dan total sesi disimpan di `sessionStorage` (`five55_session_v2`). Setiap tab memiliki sesi sendiri; reload mempertahankan sesi, penutupan tab dapat mengakhirinya. Browser dapat menyalin sesi awal saat tab diduplikasi, lalu kedua tab berjalan independen. Tidak ada akun, database, atau sinkronisasi lintas perangkat.
 
-Saldo awal 1.000 poin; WIN menambah 10, LOSE mengurangi 10. Saldo dapat negatif karena ini perhitungan simulasi. Hasil yang tidak lagi tersedia ditandai **Terlewat** dan tidak masuk akurasi. Reset sesi membutuhkan konfirmasi dan tidak menghapus riwayat hasil.
+Saldo utama dimulai dari 1.000 poin; satu prediksi utama WIN menambah 10, LOSE mengurangi 10. Hasil metode pembanding tidak memengaruhi saldo atau akurasi utama. Tanpa arah tidak dinilai. Saldo dapat negatif karena ini perhitungan simulasi. Hasil yang tidak lagi tersedia ditandai **Terlewat** dan tidak masuk akurasi. Reset sesi membutuhkan konfirmasi dan tidak menghapus riwayat hasil.
 
 Akurasi = WIN / (WIN + LOSE). Rangkaian statistik adalah urutan hasil yang tersimpan, yang dapat memiliki celah ketika aplikasi tidak aktif. Warna mengikuti aturan UI sebelumnya: ganjil hijau, genap merah, 0 dan 5 juga ungu; total warna dapat melebihi jumlah ronde.
 
@@ -71,9 +71,11 @@ Timeout penyedia 8 detik, timeout browser 12 detik. Poll berikut dijadwalkan 2 d
 
 ## Metode dan backtest
 
+Prediksi utama memilih Besar/Kecil hanya jika minimal dua dari tiga metode riwayat sepakat. Acak tidak ikut memilih. Jika belum cukup sepakat, tampil **Tidak ada arah**. Ini aturan penyajian tunggal, bukan klaim peningkatan akurasi: metode saling berkorelasi. Keputusan dikunci saat ronde dibuat.
+
 Simulator menjalankan **pola-6**, **mayoritas-30**, **mayoritas-all**, dan **acak** secara paralel. Pola-6 hanya mencocokkan enam periode berurutan, dengan hasil sesudah contoh yang juga berurutan. Minimal tiga contoh harus tidak bertumpuk dan tidak memakai baris query. Periode aktif harus tepat sesudah periode terbaru; celah arsip atau pergantian ID yang tidak bisa dipastikan memutus konteks pola. Minimum tiga contoh adalah aturan ketersediaan data, bukan bukti keunggulan statistik.
 
-Mayoritas-30 menghitung 30 sampel terbaru; mayoritas-all memakai seluruh sampel tersedia (keduanya bisa mencakup celah waktu). Saat seri atau kosong, metode tersebut abstain. Acak tetap menjadi pembanding. Hanya hasil dengan ID lebih kecil dari periode aktif boleh masuk prediksi. Prediksi dikunci sebelum hasil dan tidak diubah ketika arsip diperbarui. Penghitung sesi lama tetap dipertahankan; mulai sesi baru bila ingin mengukur aturan baru secara terpisah.
+Mayoritas-30 menghitung 30 sampel terbaru; mayoritas-all memakai seluruh sampel tersedia (keduanya bisa mencakup celah waktu). Saat seri atau kosong, metode tersebut abstain. Acak tetap menjadi pembanding. Hanya hasil dengan ID lebih kecil dari periode aktif boleh masuk prediksi. Prediksi dikunci sebelum hasil dan tidak diubah ketika arsip diperbarui. Format sesi v3 dimigrasikan ke v4: picks, hasil, dan penghitung metode lama tetap tersimpan sebagai arsip. Penghitung utama mulai dari nol dan saldo utama dari 1.000; tidak ada keputusan utama yang dibuat retroaktif. Baris lama diberi label Versi lama dan pemberitahuan migrasi ditampilkan selama arsip lama masih tersimpan.
 
 Tab **Pola** menyediakan backtest dalam Web Worker pada maksimal 2.000 sampel terbaru. Untuk seluruh dataset:
 
@@ -81,7 +83,7 @@ Tab **Pola** menyediakan backtest dalam Web Worker pada maksimal 2.000 sampel te
 node backtest-pola.js data/riwayat.json
 ```
 
-Uji memakai warmup 100, seed acak tetap 20261014, dan fungsi `predictAll` yang sama dengan simulator. Setiap target hanya melihat hasil yang lebih lama. Empat metode dibandingkan: pola-6, mayoritas-30, mayoritas-all, acak. Jumlah abstain ditampilkan terpisah; akurasi adalah benar / prediksi yang dibuat, bukan benar / seluruh ronde. Bandingkan cakupan juga: metode yang banyak abstain diuji pada subset berbeda. Tidak ada fallback tersembunyi pada hasil backtest pola.
+Uji memakai warmup 100, seed acak tetap 20261014, dan fungsi `predictAll` yang sama dengan simulator. Setiap target hanya melihat hasil yang lebih lama. Backtest menampilkan prediksi utama diikuti empat pembanding: pola-6, mayoritas-30, mayoritas-all, acak. Jumlah abstain ditampilkan terpisah; akurasi adalah benar / prediksi yang dibuat, bukan benar / seluruh ronde. Bandingkan cakupan juga: metode yang banyak abstain diuji pada subset berbeda. Tidak ada fallback tersembunyi pada hasil backtest pola.
 
 Pemisahan waktu mengikuti prinsip evaluasi data berurutan dalam [dokumentasi TimeSeriesSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html); implementasi di sini mandiri, tidak memakai scikit-learn. Data arsip memiliki celah, sehingga tidak diperlakukan sebagai rangkaian ronde lengkap.
 

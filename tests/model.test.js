@@ -31,6 +31,8 @@ test('keeps cumulative totals after the visible and retained row limits, and rel
   assert.equal(state.rounds, 549);
   assert.equal(state.methods['mayoritas-all'].win, 0);
   assert.equal(state.methods.acak.win, 549);
+  assert.equal(state.primary.abstained, 549);
+  assert.equal(state.primary.win, 0);
   assert.equal(state.methods['pola-6'].win + state.methods['pola-6'].lose, 0);
   assert.equal(state.rows.length, 500);
   const restored = restoreSession(JSON.parse(JSON.stringify(state)));
@@ -38,6 +40,7 @@ test('keeps cumulative totals after the visible and retained row limits, and rel
   assert.equal(restored.win, 549);
   assert.equal(restored.lose, 0);
   assert.equal(restored.rounds, 549);
+  assert.equal(restored.primary.abstained, 549);
 });
 test('settles each prediction once and ignores older snapshots', () => {
   const state = newSession();

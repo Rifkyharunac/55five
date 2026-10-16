@@ -79,7 +79,7 @@
           </section>
           <section class="score-grid" aria-label="Ringkasan simulasi sesi tab ini">
             <article class="score">
-              <span class="score-label">Ronde selesai <span aria-hidden="true">↗</span></span
+              <span class="score-label">Prediksi dinilai <span aria-hidden="true">↗</span></span
               ><strong id="scTotal">0</strong
               ><span class="score-detail"
                 ><span class="positive" id="scWin">0 WIN</span><span class="separator">/</span
@@ -87,14 +87,14 @@
               >
             </article>
             <article class="score">
-              <span class="score-label">Akurasi simulasi <span aria-hidden="true">◎</span></span
+              <span class="score-label">Akurasi utama <span aria-hidden="true">◎</span></span
               ><strong id="scRate">—</strong
-              ><span class="score-detail">Dari hasil yang terkonfirmasi</span>
+              ><span class="score-detail">Hanya prediksi utama yang selesai</span>
             </article>
             <article class="score">
-              <span class="score-label">Saldo demo <span aria-hidden="true">◇</span></span
+              <span class="score-label">Saldo demo utama <span aria-hidden="true">◇</span></span
               ><strong id="scSaldo">1.000</strong
-              ><span class="score-detail">Poin virtual · 10 poin / ronde</span>
+              ><span class="score-detail">Poin virtual · ±10 per prediksi utama</span>
             </article>
           </section>
           <section class="data-panel" aria-label="Data dan analisis">
@@ -106,7 +106,7 @@
                 aria-controls="view-session"
                 tabindex="0"
               >
-                Simulasi sesi
+                Prediksi
               </button>
               <button
                 id="tab-history"
@@ -148,11 +148,20 @@
             <div id="view-session" role="tabpanel" aria-labelledby="tab-session" tabindex="0">
               <div class="panel-toolbar">
                 <div>
-                  <h2>Catatan simulasi</h2>
+                  <h2>Prediksi utama</h2>
                   <p id="sessionMeta">Sesi tab ini · tersimpan saat dimuat ulang</p>
                 </div>
                 <button id="resetButton" class="text-button">Mulai sesi baru ↗</button>
               </div>
+              <p class="analysis-note primary-guide">
+                Baca kolom <strong>Prediksi utama</strong>: satu arah dari kesepakatan minimal dua
+                metode riwayat. Jika belum sepakat, tampil <strong>Tidak ada arah</strong> dan saldo
+                tidak berubah. Ini ringkasan eksperimen, bukan jaminan hasil.
+              </p>
+              <p id="legacySessionNotice" class="analysis-note primary-guide" hidden>
+                Catatan versi lama tetap tersimpan sebagai arsip. Ringkasan dan saldo utama dimulai
+                dari aturan baru; hasil lama tidak dihitung ulang.
+              </p>
               <div
                 class="table-scroll"
                 tabindex="0"
@@ -161,12 +170,12 @@
               >
                 <table>
                   <caption>
-                    Keempat metode dinilai di setiap periode, 30 baris terbaru
+                    Satu prediksi utama dan satu hasil per periode, 30 baris terbaru
                   </caption>
                   <thead>
                     <tr>
                       <th scope="col">Periode</th>
-                      <th scope="col">Prediksi 4 metode</th>
+                      <th scope="col">Prediksi utama</th>
                       <th scope="col">Hasil</th>
                       <th scope="col">Status</th>
                     </tr>
@@ -180,18 +189,17 @@
                 <p>Simulasi dimulai setelah data dan waktu server terkonfirmasi.</p>
               </div>
               <div class="panel-footer">
-                <span><span class="tiny-dot"></span> Catatan 4 metode · bukan saran taruhan</span
+                <span
+                  ><span class="tiny-dot"></span> Satu prediksi · satu penilaian · tanpa
+                  pengali</span
                 ><span id="sessionCount">0 catatan</span>
               </div>
               <details class="method-details">
-                <summary>Kinerja per metode</summary>
+                <summary>Perbandingan metode (opsional)</summary>
                 <p>
-                  Keempat metode (pola-6, mayoritas-30, mayoritas-all, acak) masing-masing memberi
-                  satu prediksi di setiap periode dan dinilai terpisah. Metode yang tidak punya
-                  sinyal pada suatu ronde abstain dan tidak dihitung. Pola hanya memakai periode
-                  berurutan dan minimal tiga contoh yang tidak bertumpuk; seri tidak dipaksa menjadi
-                  Besar. Mayoritas memakai sampel tersimpan, bukan bukti peluang ronde berikutnya.
-                  Semua berupa eksperimen.
+                  Angka di sini adalah evaluasi masing-masing metode, bukan hasil utama dan tidak
+                  memengaruhi saldo demo utama. Metode acak hanya pembanding. Kesepakatan dua metode
+                  bukan persentase keyakinan karena metode dapat memakai data yang sama.
                 </p>
                 <div
                   class="table-scroll"
@@ -515,10 +523,11 @@
                 <section>
                   <h3>Cara membaca sesi</h3>
                   <p>
-                    WIN dan LOSE berasal dari hasil yang cocok dengan ID periode lengkap. Terlewat
-                    berarti hasil belum dapat dipastikan dan tidak dihitung dalam akurasi. Saldo
-                    demo adalah poin virtual dengan perubahan tetap ±10 per ronde; tidak mewakili
-                    payout atau saldo akun eksternal.
+                    WIN dan LOSE utama berasal dari satu prediksi yang cocok dengan ID periode
+                    lengkap. Terlewat berarti hasil belum dapat dipastikan dan tidak dihitung dalam
+                    akurasi. Saldo demo utama berubah ±10 per prediksi utama; tanpa arah tidak
+                    mengubah saldo dan rincian metode tidak menambah WIN/LOSE utama. Saldo tidak
+                    mewakili payout atau saldo akun eksternal.
                   </p>
                 </section>
               </div>

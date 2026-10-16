@@ -1451,3 +1451,20 @@ body.compact td {
     transition: none !important;
   }
 }
+
+.primary-guide {
+  margin: 0;
+  padding: 12px 24px;
+}
+#sessionBody details {
+  margin-top: 8px;
+}
+#sessionBody summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-size: 12px;
+}
+#sessionBody summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}

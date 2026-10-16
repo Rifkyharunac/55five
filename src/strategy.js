@@ -63,3 +63,13 @@ export function predictAll(history, random = Math.random, targetIssue = null) {
     acak: random() > 0.5 ? 'Besar' : 'Kecil',
   };
 }
+
+// A presentation rule, not a probability estimate: correlated methods are not
+// independent evidence. Random is a comparison only and cannot decide the primary.
+export function primaryDecision(picks) {
+  const values = ['pola-6', 'mayoritas-30', 'mayoritas-all'].map((method) => picks[method]);
+  for (const side of ['Besar', 'Kecil']) {
+    if (values.filter((value) => value === side).length >= 2) return side;
+  }
+  return null;
+}
