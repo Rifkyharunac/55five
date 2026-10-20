@@ -198,6 +198,16 @@ export function renderStats(history) {
       element('span', `${label} · ${count}`, `badge ${colorClasses[label]}`),
     ),
   );
+  const uniformity = stats.uniformity;
+  text('chiValue', uniformity ? uniformity.chi2.toFixed(2).replace('.', ',') : '—');
+  text(
+    'chiNote',
+    uniformity
+      ? `${number(uniformity.n)} ronde · df=9 · batas kritis 16,92 (α=5%) → sampel ${
+          uniformity.uniform ? 'terlihat merata' : 'menyimpang dari seragam'
+        }`
+      : 'Belum ada sampel',
+  );
 }
 
 export function setupTabs() {

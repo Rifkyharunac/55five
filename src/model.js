@@ -271,7 +271,31 @@ export function statistics(history) {
       stats.streak.count++;
     }
   }
+  stats.uniformity = chiSquareUniform(stats.frequency);
   return stats;
+}
+
+// Nilai kritis chi-square df=9 pada alpha=0,05 (tabel baku statistik).
+export const CHI_SQUARE_DF9_CRITICAL_95 = 16.919;
+
+// Uji goodness-of-fit: apakah frekuensi angka 0-9 pada sampel terlihat
+// merata (distribusi seragam)? Murni deskriptif: hasilnya hanya
+// menggambarkan sampel, tidak mengatakan apa pun tentang ronde berikutnya.
+export function chiSquareUniform(frequency) {
+  const counts = Array.isArray(frequency) ? frequency.slice(0, 10) : [];
+  if (counts.length < 10 || counts.some((count) => !Number.isInteger(count) || count < 0))
+    return null;
+  const n = counts.reduce((sum, count) => sum + count, 0);
+  if (n === 0) return null;
+  const expected = n / 10;
+  const chi2 = counts.reduce((sum, observed) => sum + (observed - expected) ** 2 / expected, 0);
+  return {
+    n,
+    chi2,
+    df: 9,
+    critical: CHI_SQUARE_DF9_CRITICAL_95,
+    uniform: chi2 <= CHI_SQUARE_DF9_CRITICAL_95,
+  };
 }
 
 export function historyCsv(history) {

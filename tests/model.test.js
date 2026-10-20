@@ -8,6 +8,7 @@ import {
   statistics,
   filterHistory,
   historyCsv,
+  chiSquareUniform,
 } from '../src/model.js';
 
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
@@ -161,4 +162,27 @@ test('archive filtering and CSV can include more than the local 500-result limit
   assert.equal(filterHistory(archive, { query: id(1), limit: 30 })[0].p, id(1));
   assert.equal(historyCsv(filtered).split('\r\n').length, 801);
   assert.equal(statistics(archive).total, 800);
+});
+
+test('chiSquareUniform mengukur penyimpangan frekuensi dari seragam', () => {
+  const uniform = chiSquareUniform(Array(10).fill(100));
+  assert.equal(uniform.n, 1000);
+  assert.equal(uniform.df, 9);
+  assert.equal(uniform.chi2, 0);
+  assert.equal(uniform.uniform, true);
+  // 500 ronde semuanya angka 0: ekspektasi 50 per angka.
+  // chi2 = (450^2/50) + 9*(50^2/50) = 4050 + 450 = 4500.
+  const skewed = chiSquareUniform([500, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.equal(skewed.chi2, 4500);
+  assert.equal(skewed.uniform, false);
+  assert.equal(chiSquareUniform(Array(10).fill(0)), null);
+  assert.equal(chiSquareUniform([1, 2, 3]), null);
+});
+
+test('statistics melampirkan hasil uji sebaran angka', () => {
+  const history = Array.from({ length: 20 }, (_, i) => ({ p: id(i + 1), h: i % 10 }));
+  const stats = statistics(history);
+  assert.ok(stats.uniformity);
+  assert.equal(stats.uniformity.n, 20);
+  assert.equal(stats.uniformity.chi2, 0);
 });
