@@ -185,6 +185,18 @@ export function renderStats(history) {
     'ratioText',
     stats.total ? `${percent}% besar · ${100 - percent}% kecil` : 'Belum ada sampel',
   );
+  const share = stats.bigShare;
+  const pct = (value) => (100 * value).toFixed(1).replace('.', ',');
+  text(
+    'ratioInterval',
+    share
+      ? `Selang kepercayaan 95% untuk porsi besar: ${pct(share.lo)}%–${pct(share.hi)}% · ${
+          share.lo <= 0.5 && 0.5 <= share.hi
+            ? '50% masih di dalamnya — selisih dari setengah masih selaras dengan noise sampel.'
+            : '50% di luar selang — porsi sampel ini menyimpang dari setengah, tapi tetap hanya gambaran sampel, bukan sinyal ronde berikutnya.'
+        }`
+      : 'Belum ada sampel',
+  );
   text('streakValue', stats.total ? `${stats.streak.category} × ${stats.streak.count}` : '—');
   text(
     'streakNote',

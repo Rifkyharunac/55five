@@ -271,8 +271,36 @@ export function statistics(history) {
       stats.streak.count++;
     }
   }
+  stats.bigShare = wilsonInterval(stats.big, stats.total);
   stats.uniformity = chiSquareUniform(stats.frequency);
   return stats;
+}
+
+// Selang kepercayaan Wilson 95% (z = 1,96) untuk suatu proporsi: lebih stabil
+// dari aproksimasi normal pada sampel kecil atau proporsi ekstrem. Murni
+// deskriptif: menggambarkan ketidakpastian sampel, bukan peluang ronde
+// berikutnya.
+export function wilsonInterval(count, total) {
+  if (
+    !Number.isInteger(count) ||
+    !Number.isInteger(total) ||
+    count < 0 ||
+    total <= 0 ||
+    count > total
+  )
+    return null;
+  const z = 1.96;
+  const z2 = z * z;
+  const p = count / total;
+  const denominator = 1 + z2 / total;
+  const center = (p + z2 / (2 * total)) / denominator;
+  const half = (z * Math.sqrt(p * (1 - p) / total + z2 / (4 * total * total))) / denominator;
+  return {
+    count,
+    total,
+    lo: Math.max(0, center - half),
+    hi: Math.min(1, center + half),
+  };
 }
 
 // Nilai kritis chi-square df=9 pada alpha=0,05 (tabel baku statistik).

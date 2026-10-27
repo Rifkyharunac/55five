@@ -9,6 +9,7 @@ import {
   filterHistory,
   historyCsv,
   chiSquareUniform,
+  wilsonInterval,
 } from '../src/model.js';
 
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
@@ -177,6 +178,26 @@ test('chiSquareUniform mengukur penyimpangan frekuensi dari seragam', () => {
   assert.equal(skewed.uniform, false);
   assert.equal(chiSquareUniform(Array(10).fill(0)), null);
   assert.equal(chiSquareUniform([1, 2, 3]), null);
+});
+
+test('wilsonInterval memberi selang kepercayaan 95% untuk porsi besar', () => {
+  // 500 dari 1000: selang Wilson 95% ≈ 46,91%–53,09%, memuat 50%.
+  const even = wilsonInterval(500, 1000);
+  assert.ok(Math.abs(even.lo - 0.4691) < 0.001);
+  assert.ok(Math.abs(even.hi - 0.5309) < 0.001);
+  assert.ok(even.lo <= 0.5 && 0.5 <= even.hi);
+  // 5 dari 5: batas bawah di atas 50% tapi tidak pernah melebihi 100%.
+  const all = wilsonInterval(5, 5);
+  assert.ok(all.lo > 0.5 && all.hi <= 1);
+  assert.equal(wilsonInterval(0, 0), null);
+  assert.equal(wilsonInterval(3, 2), null);
+  assert.equal(wilsonInterval(-1, 10), null);
+  // statistics melampirkan selang untuk porsi besar pada sampel yang sama.
+  const stats = statistics(
+    Array.from({ length: 20 }, (_, i) => ({ p: id(i + 1), h: i % 10 })),
+  );
+  assert.equal(stats.big, 10);
+  assert.ok(stats.bigShare.lo < 0.5 && 0.5 < stats.bigShare.hi);
 });
 
 test('statistics melampirkan hasil uji sebaran angka', () => {

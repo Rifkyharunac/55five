@@ -18,6 +18,7 @@
 - Sesi per tab yang bertahan saat reload, migrasi riwayat lama, dan pemberitahuan penyimpanan gagal.
 - Server pengembangan, build statis terpilah, pengujian unit/browser/aksesibilitas, dan CI.
 - Tab Pola dan Edukasi, backtest deterministik di worker, serta perbandingan empat metode.
+- Selang kepercayaan 95% (Wilson) untuk porsi besar di tab Statistik, agar selisih dari 50% terbaca bersama ketidakpastian sampelnya.
 - Arsip upstream digabung dengan hasil live; pencarian, statistik, dan CSV mendukung seluruh arsip.
 
 ### Fixed
