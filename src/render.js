@@ -220,6 +220,29 @@ export function renderStats(history) {
         }`
       : 'Belum ada sampel',
   );
+  const transition = stats.transitions;
+  const shareNextBig = (group) => {
+    const total = group.big + group.small;
+    return total ? `${((100 * group.big) / total).toFixed(1).replace('.', ',')}%` : '—';
+  };
+  text(
+    'transitionAfterBig',
+    transition
+      ? `Setelah Besar → Besar ${number(transition.afterBig.big)} · Kecil ${number(transition.afterBig.small)} · Besar berikutnya ${shareNextBig(transition.afterBig)}`
+      : 'Belum ada pasangan berurutan',
+  );
+  text(
+    'transitionAfterSmall',
+    transition
+      ? `Setelah Kecil → Besar ${number(transition.afterSmall.big)} · Kecil ${number(transition.afterSmall.small)} · Besar berikutnya ${shareNextBig(transition.afterSmall)}`
+      : 'Belum ada pasangan berurutan',
+  );
+  text(
+    'transitionNote',
+    transition
+      ? `${number(transition.pairs)} pasangan periode berurutan dalam sampel.`
+      : 'Belum ada pasangan periode berurutan dalam sampel.',
+  );
 }
 
 export function setupTabs() {

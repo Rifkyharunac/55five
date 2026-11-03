@@ -273,6 +273,7 @@ export function statistics(history) {
   }
   stats.bigShare = wilsonInterval(stats.big, stats.total);
   stats.uniformity = chiSquareUniform(stats.frequency);
+  stats.transitions = transitions(rows);
   return stats;
 }
 
@@ -324,6 +325,35 @@ export function chiSquareUniform(frequency) {
     critical: CHI_SQUARE_DF9_CRITICAL_95,
     uniform: chi2 <= CHI_SQUARE_DF9_CRITICAL_95,
   };
+}
+
+// Transisi kategori antar periode yang benar-benar berurutan: nomor periode
+// diakhiri urutan harian 5 digit, jadi pasangan hanya dihitung bila awalan
+// periode sama dan 5 digit terakhirnya berselisih tepat 1. Jeda arsip
+// dilewati — pasangan yang tidak bersebelahan bukan transisi. Murni
+// deskriptif: menguji apakah hasil sebelumnya mengubah porsi hasil
+// berikutnya dalam sampel, bukan memprediksi ronde berikutnya.
+export function transitions(history) {
+  const rows = mergeHistory(history, [], Infinity).reverse();
+  const counts = {
+    pairs: 0,
+    afterBig: { big: 0, small: 0 },
+    afterSmall: { big: 0, small: 0 },
+  };
+  for (let i = 1; i < rows.length; i++) {
+    const previous = rows[i - 1];
+    const current = rows[i];
+    if (
+      previous.p.length !== current.p.length ||
+      previous.p.slice(0, -5) !== current.p.slice(0, -5) ||
+      Number(current.p.slice(-5)) - Number(previous.p.slice(-5)) !== 1
+    )
+      continue;
+    counts.pairs++;
+    const from = category(previous.h) === 'Besar' ? 'afterBig' : 'afterSmall';
+    counts[from][category(current.h) === 'Besar' ? 'big' : 'small']++;
+  }
+  return counts.pairs ? counts : null;
 }
 
 export function historyCsv(history) {

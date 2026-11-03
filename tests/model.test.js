@@ -10,6 +10,7 @@ import {
   historyCsv,
   chiSquareUniform,
   wilsonInterval,
+  transitions,
 } from '../src/model.js';
 
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
@@ -206,4 +207,24 @@ test('statistics melampirkan hasil uji sebaran angka', () => {
   assert.ok(stats.uniformity);
   assert.equal(stats.uniformity.n, 20);
   assert.equal(stats.uniformity.chi2, 0);
+});
+
+test('transitions hanya menghitung pasangan periode berurutan', () => {
+  const history = [
+    { p: id(1), h: 8 },
+    { p: id(2), h: 3 },
+    { p: id(3), h: 9 },
+    { p: id(4), h: 2 },
+  ];
+  assert.deepEqual(transitions(history), {
+    pairs: 3,
+    afterBig: { big: 0, small: 2 },
+    afterSmall: { big: 1, small: 0 },
+  });
+  // Jeda (id 2 dilewati) dan ganti hari bukan transisi.
+  assert.equal(transitions([{ p: id(1), h: 8 }, { p: id(3), h: 9 }]), null);
+  assert.equal(transitions([{ p: id(1), h: 8 }, { p: '20261015100050002', h: 9 }]), null);
+  assert.equal(transitions([]), null);
+  // statistics melampirkan transisi pada sampel yang sama.
+  assert.equal(statistics(history).transitions.pairs, 3);
 });
