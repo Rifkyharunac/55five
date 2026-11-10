@@ -274,6 +274,7 @@ export function statistics(history) {
   stats.bigShare = wilsonInterval(stats.big, stats.total);
   stats.uniformity = chiSquareUniform(stats.frequency);
   stats.transitions = transitions(rows);
+  stats.streakLengths = streakLengths(rows);
   return stats;
 }
 
@@ -295,7 +296,7 @@ export function wilsonInterval(count, total) {
   const p = count / total;
   const denominator = 1 + z2 / total;
   const center = (p + z2 / (2 * total)) / denominator;
-  const half = (z * Math.sqrt(p * (1 - p) / total + z2 / (4 * total * total))) / denominator;
+  const half = (z * Math.sqrt((p * (1 - p)) / total + z2 / (4 * total * total))) / denominator;
   return {
     count,
     total,
@@ -354,6 +355,56 @@ export function transitions(history) {
     counts[from][category(current.h) === 'Besar' ? 'big' : 'small']++;
   }
   return counts.pairs ? counts : null;
+}
+
+// Distribusi panjang rangkaian Besar/Kecil: berapa rangkaian sepanjang 1,
+// 2, …, 8, dan 9+ yang muncul dalam sampel, dibanding harapan pada koin
+// adil (rangkaian sepanjang k muncul kira-kira setengah dari rangkaian
+// sepanjang k−1). Rangkaian hanya berlanjut pada periode yang benar-benar
+// berurutan — jeda arsip memutus rangkaian, seperti pada transisi. Murni
+// deskriptif: rangkaian panjang memang jarang tapi tetap muncul, dan itu
+// bukan sinyal ronde berikutnya.
+export function streakLengths(history) {
+  const rows = mergeHistory(history, [], Infinity).reverse();
+  const buckets = Array.from({ length: 9 }, (_, i) => ({
+    length: i + 1,
+    label: i === 8 ? '9+' : String(i + 1),
+    observed: 0,
+    expected: 0,
+  }));
+  let runs = 0;
+  let longest = 0;
+  let run = 0;
+  let previous = null;
+  const closeRun = () => {
+    if (run === 0) return;
+    buckets[Math.min(run, 9) - 1].observed++;
+    runs++;
+    longest = Math.max(longest, run);
+    run = 0;
+  };
+  for (const row of rows) {
+    const name = category(row.h);
+    const continues =
+      previous &&
+      previous.p.length === row.p.length &&
+      previous.p.slice(0, -5) === row.p.slice(0, -5) &&
+      Number(row.p.slice(-5)) - Number(previous.p.slice(-5)) === 1 &&
+      category(previous.h) === name;
+    if (continues) run++;
+    else {
+      closeRun();
+      run = 1;
+    }
+    previous = row;
+  }
+  closeRun();
+  if (!runs) return null;
+  for (const bucket of buckets) {
+    // P(rangkaian sepanjang tepat k) = (1/2)^k; P(panjang ≥ 9) = (1/2)^8.
+    bucket.expected = runs * 2 ** -(bucket.length === 9 ? 8 : bucket.length);
+  }
+  return { runs, longest, buckets };
 }
 
 export function historyCsv(history) {

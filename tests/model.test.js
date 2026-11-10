@@ -11,6 +11,7 @@ import {
   chiSquareUniform,
   wilsonInterval,
   transitions,
+  streakLengths,
 } from '../src/model.js';
 
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
@@ -194,9 +195,7 @@ test('wilsonInterval memberi selang kepercayaan 95% untuk porsi besar', () => {
   assert.equal(wilsonInterval(3, 2), null);
   assert.equal(wilsonInterval(-1, 10), null);
   // statistics melampirkan selang untuk porsi besar pada sampel yang sama.
-  const stats = statistics(
-    Array.from({ length: 20 }, (_, i) => ({ p: id(i + 1), h: i % 10 })),
-  );
+  const stats = statistics(Array.from({ length: 20 }, (_, i) => ({ p: id(i + 1), h: i % 10 })));
   assert.equal(stats.big, 10);
   assert.ok(stats.bigShare.lo < 0.5 && 0.5 < stats.bigShare.hi);
 });
@@ -222,9 +221,68 @@ test('transitions hanya menghitung pasangan periode berurutan', () => {
     afterSmall: { big: 1, small: 0 },
   });
   // Jeda (id 2 dilewati) dan ganti hari bukan transisi.
-  assert.equal(transitions([{ p: id(1), h: 8 }, { p: id(3), h: 9 }]), null);
-  assert.equal(transitions([{ p: id(1), h: 8 }, { p: '20261015100050002', h: 9 }]), null);
+  assert.equal(
+    transitions([
+      { p: id(1), h: 8 },
+      { p: id(3), h: 9 },
+    ]),
+    null,
+  );
+  assert.equal(
+    transitions([
+      { p: id(1), h: 8 },
+      { p: '20261015100050002', h: 9 },
+    ]),
+    null,
+  );
   assert.equal(transitions([]), null);
   // statistics melampirkan transisi pada sampel yang sama.
   assert.equal(statistics(history).transitions.pairs, 3);
+});
+
+test('streakLengths menghitung distribusi panjang rangkaian vs harapan koin adil', () => {
+  // B,K,B,K: empat rangkaian panjang 1; harapan tiap panjang k = 4 / 2^k.
+  const alternating = streakLengths([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 3 },
+    { p: id(3), h: 9 },
+    { p: id(4), h: 2 },
+  ]);
+  assert.equal(alternating.runs, 4);
+  assert.equal(alternating.longest, 1);
+  assert.equal(alternating.buckets[0].observed, 4);
+  assert.equal(alternating.buckets[0].expected, 2);
+  assert.equal(alternating.buckets[1].observed, 0);
+  assert.equal(alternating.buckets[1].expected, 1);
+  // B,B,B,K: satu rangkaian panjang 3 dan satu panjang 1.
+  const run = streakLengths([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 9 },
+    { p: id(3), h: 7 },
+    { p: id(4), h: 2 },
+  ]);
+  assert.equal(run.runs, 2);
+  assert.equal(run.longest, 3);
+  assert.equal(run.buckets[0].observed, 1);
+  assert.equal(run.buckets[2].observed, 1);
+  assert.equal(run.buckets[2].expected, 0.25);
+  assert.equal(run.buckets[8].label, '9+');
+  assert.equal(run.buckets[8].expected, 2 * 2 ** -8);
+  // Jeda (id 2 dilewati) memutus rangkaian: dua rangkaian panjang 1, bukan satu panjang 2.
+  const gapped = streakLengths([
+    { p: id(1), h: 8 },
+    { p: id(3), h: 9 },
+  ]);
+  assert.equal(gapped.runs, 2);
+  assert.equal(gapped.longest, 1);
+  assert.equal(streakLengths([]), null);
+  // statistics melampirkan distribusi pada sampel yang sama.
+  const stats = statistics([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 9 },
+    { p: id(3), h: 7 },
+    { p: id(4), h: 2 },
+  ]);
+  assert.equal(stats.streakLengths.runs, 2);
+  assert.equal(stats.streakLengths.longest, 3);
 });

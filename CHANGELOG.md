@@ -19,6 +19,7 @@
 - Server pengembangan, build statis terpilah, pengujian unit/browser/aksesibilitas, dan CI.
 - Tab Pola dan Edukasi, backtest deterministik di worker, serta perbandingan empat metode.
 - Selang kepercayaan 95% (Wilson) untuk porsi besar di tab Statistik, agar selisih dari 50% terbaca bersama ketidakpastian sampelnya.
+- Distribusi panjang rangkaian Besar/Kecil di tab Statistik: jumlah rangkaian sepanjang 1–8 dan 9+ dibanding harapan pada koin adil, agar rangkaian panjang terbaca sebagai kejadian yang memang diharapkan sesekali, bukan sinyal.
 - Arsip upstream digabung dengan hasil live; pencarian, statistik, dan CSV mendukung seluruh arsip.
 
 ### Fixed

@@ -243,6 +243,26 @@ export function renderStats(history) {
       ? `${number(transition.pairs)} pasangan periode berurutan dalam sampel.`
       : 'Belum ada pasangan periode berurutan dalam sampel.',
   );
+  const lengths = stats.streakLengths;
+  const lengthBody = $('streakLengthBody');
+  if (lengths) {
+    const fragment = document.createDocumentFragment();
+    for (const bucket of lengths.buckets) {
+      const tr = element('tr');
+      cell(tr, bucket.label);
+      cell(tr, number(bucket.observed));
+      cell(tr, bucket.expected.toFixed(1).replace('.', ','));
+      fragment.append(tr);
+    }
+    lengthBody.replaceChildren(fragment);
+    text(
+      'streakLengthNote',
+      `${number(lengths.runs)} rangkaian dalam sampel · terpanjang ${lengths.longest}.`,
+    );
+  } else {
+    lengthBody.replaceChildren();
+    text('streakLengthNote', 'Belum ada sampel');
+  }
 }
 
 export function setupTabs() {
