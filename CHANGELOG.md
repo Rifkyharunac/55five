@@ -1,5 +1,12 @@
 # Changelog
 
+## 11 November 2026 — Metode arsip-penuh
+
+- Metode kelima **arsip-penuh** di simulator dan backtest: posterior Laplace dari seluruh arsip yang dimuat, sinyal hanya bila satu sisi melewati ambang impas payout 1,96 (p &gt; 0,5102), selebihnya LEWATI. Tidak ikut memilih prediksi utama.
+- Kartu baru **Backtest Arsip-Penuh** di tab Statistik: verdict ronde berikutnya + angka walk-forward (warm-up 50) + baseline "selalu Besar", dihitung live dari arsip yang dimuat.
+- Backtest arsip live 11 November 2026 (71.979 ronde): 71.929 dinilai, 3.773 sinyal, 1.906 menang, win rate 50,52% (CI95 48,92%–52,11%), EV −0,99%, baseline "selalu Besar" 50,11%; verdict ronde berikutnya LEWATI (P(Besar) 50,13%). Arsip tidak menunjukkan edge.
+- Sesi v3/v4 lama dimigrasikan otomatis (penghitung arsip-penuh mulai dari nol, baris lama abstain untuk metode ini); skor metode lain tidak berubah.
+
 ## 16 Oktober 2026 — Prediksi utama
 
 - Satu arah utama per periode, dari kesepakatan minimal dua metode riwayat; acak hanya pembanding. Belum sepakat ditampilkan sebagai Tidak ada arah.

@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { patternPrediction, predictAll } from '../src/strategy.js';
+import {
+  patternPrediction,
+  predictAll,
+  arsipPenuhPrediction,
+  arsipPenuhDigit,
+  arsipPenuhBacktest,
+} from '../src/strategy.js';
 import { backtest } from '../src/experiments.js';
 import { advanceSession, newSession, restoreSession } from '../src/model.js';
 const id = (n) => String(20261015100050000n + BigInt(n));
@@ -49,12 +55,12 @@ test('live pattern requires the immediately preceding period and sorts past inpu
   );
   assert.equal(fresh.rows[0].picks['pola-6'], 'Besar');
 });
-test('backtest evaluates the same four live methods with explicit abstentions', () => {
+test('backtest evaluates the same five live methods with explicit abstentions', () => {
   const history = Array.from({ length: 110 }, (_, i) => ({ p: id(i * 2), h: i % 2 ? 8 : 1 }));
   const result = backtest(history);
   assert.deepEqual(
     result.comparison.map((r) => r.method),
-    ['pola-6', 'mayoritas-30', 'mayoritas-all', 'acak'],
+    ['pola-6', 'mayoritas-30', 'mayoritas-all', 'acak', 'arsip-penuh'],
   );
   assert.equal(result.comparison[0].total, 0);
   assert.equal(result.comparison[0].abstained, 10);
@@ -89,6 +95,68 @@ test('backtest evaluates the same four live methods with explicit abstentions', 
     assert.equal(r.correct, state.methods[r.method].win);
     assert.equal(r.total, state.methods[r.method].win + state.methods[r.method].lose);
   }
+});
+
+test('arsip-penuh memakai seluruh arsip dan abstain di bawah ambang EV', () => {
+  const mixed = (big, small) =>
+    [
+      ...Array.from({ length: big }, (_, i) => ({ p: id(i + 1), h: 8 })),
+      ...Array.from({ length: small }, (_, i) => ({ p: id(big + i + 1), h: 1 })),
+    ].reverse();
+  // (40 + 0,5) / 61 ≈ 0,6639 > 0,5102 → Besar.
+  assert.equal(arsipPenuhPrediction(mixed(40, 20)), 'Besar');
+  // (30 + 0,5) / 61 = 0,5 → LEWATI.
+  assert.equal(arsipPenuhPrediction(mixed(30, 30)), null);
+  // P(Kecil) = 1 − 20,5/61 ≈ 0,6639 > 0,5102 → Kecil.
+  assert.equal(arsipPenuhPrediction(mixed(20, 40)), 'Kecil');
+  assert.equal(arsipPenuhPrediction([]), null);
+  assert.equal(predictAll(mixed(40, 20), () => 0.1)['arsip-penuh'], 'Besar');
+  assert.equal(predictAll(mixed(30, 30), () => 0.1)['arsip-penuh'], null);
+  // Digit terbanyak hanya info deskriptif: 40× angka 8 → (40 + 0,5) / 65.
+  assert.deepEqual(arsipPenuhDigit(mixed(40, 20)), { digit: 8, posterior: 40.5 / 65 });
+  assert.equal(arsipPenuhDigit([]), null);
+});
+
+test('arsip-penuh backtest walk-forward hanya memakai ronde sebelumnya', () => {
+  // 50 ronde Besar lalu 8, 1, 8, 1, 8. Lima target dinilai; posterior dari
+  // ronde sebelumnya selalu > 0,95 → lima sinyal Besar, 3 menang, 2 kalah.
+  const values = [...Array(50).fill(8), 8, 1, 8, 1, 8];
+  const history = values.map((h, i) => ({ p: id(i + 1), h }));
+  const result = arsipPenuhBacktest(history);
+  assert.equal(result.n, 55);
+  assert.equal(result.dievaluasi, 5);
+  assert.equal(result.sinyal, 5);
+  assert.equal(result.menang, 3);
+  assert.equal(result.kalah, 2);
+  assert.equal(result.winRate, 0.6);
+  assert.ok(Math.abs(result.ev - 0.176) < 1e-12);
+  assert.deepEqual(result.baseline, { menang: 3, winRate: 0.6 });
+  assert.ok(Math.abs(result.rasioBesar - 53 / 55) < 1e-12);
+  // Urutan masukan bebas: terbaru-dahulu memberi angka yang sama persis.
+  assert.deepEqual(arsipPenuhBacktest([...history].reverse()), result);
+  assert.equal(arsipPenuhPrediction(history), 'Besar');
+  assert.deepEqual(arsipPenuhDigit(history), { digit: 8, posterior: 53.5 / 60 });
+  // Selang-seling 8,1: posterior selalu ≈ 0,5 → 0 sinyal, bukan 0 menang.
+  const alternating = Array.from({ length: 60 }, (_, i) => ({ p: id(i + 1), h: i % 2 ? 1 : 8 }));
+  const flat = arsipPenuhBacktest(alternating);
+  assert.equal(flat.dievaluasi, 10);
+  assert.equal(flat.sinyal, 0);
+  assert.equal(flat.menang, 0);
+  assert.equal(flat.winRate, null);
+  assert.equal(flat.ev, null);
+  assert.deepEqual(flat.baseline, { menang: 5, winRate: 0.5 });
+  // Arsip kosong: semua null/nol, tanpa crash.
+  assert.deepEqual(arsipPenuhBacktest([]), {
+    n: 0,
+    dievaluasi: 0,
+    sinyal: 0,
+    menang: 0,
+    kalah: 0,
+    winRate: null,
+    ev: null,
+    baseline: { menang: 0, winRate: null },
+    rasioBesar: null,
+  });
 });
 
 test('an issued prediction stays locked when more history arrives and survives reload', () => {

@@ -1,5 +1,13 @@
 import { issueId, digit, category, colors, compareIssues } from './data.js';
-import { predictAll, METHODS, primaryDecision } from './strategy.js';
+import {
+  predictAll,
+  METHODS,
+  primaryDecision,
+  arsipPenuhBacktest,
+  arsipPenuhPosterior,
+  arsipPenuhDigit,
+  sinyalArsipPenuh,
+} from './strategy.js';
 
 export const HISTORY_LIMIT = 500;
 export const INITIAL_BALANCE = 1000;
@@ -31,6 +39,25 @@ function validPicks(picks) {
 }
 
 export function restoreSession(value) {
+  // Migrasi: sesi v3/v4 yang tersimpan sebelum 'arsip-penuh' ada tidak punya
+  // kunci itu di methods/picks. Isi default (0 / null) agar sesi lama tetap
+  // bisa dipulihkan tanpa menghapus riwayat skor — metode ini memang belum
+  // ada saat baris-baris itu dibuat, jadi tidak ada prediksi yang hilang.
+  if (value && (value.version === 3 || value.version === 4)) {
+    const methods = { 'arsip-penuh': { win: 0, lose: 0 }, ...(value.methods ?? {}) };
+    const rows = Array.isArray(value.rows)
+      ? value.rows.map((row) =>
+          row &&
+          typeof row === 'object' &&
+          row.picks &&
+          typeof row.picks === 'object' &&
+          !('arsip-penuh' in row.picks)
+            ? { ...row, picks: { ...row.picks, 'arsip-penuh': null } }
+            : row,
+        )
+      : value.rows;
+    value = { ...value, methods, rows };
+  }
   if (
     !value ||
     ![3, 4].includes(value.version) ||
@@ -275,7 +302,27 @@ export function statistics(history) {
   stats.uniformity = chiSquareUniform(stats.frequency);
   stats.transitions = transitions(rows);
   stats.streakLengths = streakLengths(rows);
+  stats.arsipPenuh = arsipPenuh(rows);
   return stats;
+}
+
+// Backtest Arsip-Penuh atas sampel yang sama dengan kartu statistik lain,
+// ditambah verdict ronde berikutnya dari seluruh sampel. Murni deskriptif:
+// walk-forward menghitung sinyal hanya dari ronde-ronde sebelumnya, dan
+// hasilnya menggambarkan sampel yang sudah terjadi — bukan peluang ronde
+// berikutnya. Selang kepercayaan memakai wilsonInterval yang sama dengan
+// porsi besar di atas.
+export function arsipPenuh(history) {
+  const rows = mergeHistory(history, [], Infinity);
+  const backtest = arsipPenuhBacktest(rows);
+  const posterior = arsipPenuhPosterior(rows);
+  return {
+    ...backtest,
+    ci95: wilsonInterval(backtest.menang, backtest.sinyal),
+    pBesar: posterior ? posterior.pBesar : null,
+    verdict: posterior ? sinyalArsipPenuh(posterior.pBesar) : null,
+    digit: arsipPenuhDigit(rows),
+  };
 }
 
 // Selang kepercayaan Wilson 95% (z = 1,96) untuk suatu proporsi: lebih stabil

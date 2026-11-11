@@ -406,6 +406,23 @@
                     tetap muncul, dan itu bukan sinyal ronde berikutnya.
                   </p>
                 </section>
+                <section class="uniformity-section" aria-labelledby="arsipPenuhTitle">
+                  <h3 id="arsipPenuhTitle">Backtest Arsip-Penuh</h3>
+                  <div class="stat-box">
+                    <p id="arsipPenuhVerdict">Belum ada sampel</p>
+                    <p id="arsipPenuhBacktest">Belum ada sampel</p>
+                    <p id="arsipPenuhNote" class="chart-note">Belum ada sampel</p>
+                  </div>
+                  <p class="chart-note">
+                    Metode arsip-penuh memakai seluruh arsip yang dimuat: posterior Laplace
+                    P(Besar) = (jumlah Besar + 0,5) / (N + 1). Sinyal hanya muncul bila satu
+                    sisi melewati ambang impas payout 1,96 (p &gt; 0,5102); selebihnya LEWATI.
+                    Backtest walk-forward menghitung sinyal hanya dari ronde-ronde sebelumnya,
+                    bukan dari ronde yang dinilai. Digit terbanyak hanya info deskriptif, bukan
+                    sinyal taruhan. Angka ini menggambarkan sampel yang sudah terjadi — arsip
+                    tidak menunjukkan edge, dan ronde berikutnya tetap acak dan independen.
+                  </p>
+                </section>
                 <p class="analysis-note">
                   Statistik menggambarkan hasil yang sudah terjadi. Setiap ronde acak dan
                   independen; pola sebelumnya tidak memastikan hasil berikutnya.
@@ -466,7 +483,7 @@
                   <p class="chart-note" id="backtestHint">Perlu lebih dari 100 hasil.</p>
                   <p class="chart-note">
                     Walk-forward: setiap tebakan hanya memakai hasil yang lebih lama dengan aturan
-                    empat metode yang sama seperti simulasi langsung. Abstain ditampilkan terpisah;
+                    lima metode yang sama seperti simulasi langsung. Abstain ditampilkan terpisah;
                     akurasi hanya menghitung prediksi yang dibuat. Bandingkan juga jumlah
                     prediksinya.
                   </p>

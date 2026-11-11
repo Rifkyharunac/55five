@@ -24,6 +24,7 @@ const SHORT_METHOD = {
   'mayoritas-30': 'M30',
   'mayoritas-all': 'Mall',
   acak: 'acak',
+  'arsip-penuh': 'arsip-penuh',
 };
 
 function picksDetail(picks) {
@@ -262,6 +263,36 @@ export function renderStats(history) {
   } else {
     lengthBody.replaceChildren();
     text('streakLengthNote', 'Belum ada sampel');
+  }
+  const arsip = stats.arsipPenuh;
+  const pct2 = (value) => `${(100 * value).toFixed(2).replace('.', ',')}%`;
+  if (arsip && arsip.n > 0) {
+    text(
+      'arsipPenuhVerdict',
+      `Verdict ronde berikutnya: ${arsip.verdict ?? 'LEWATI'} · P(Besar) ${pct2(arsip.pBesar)} · P(Kecil) ${pct2(1 - arsip.pBesar)} · N=${number(arsip.n)} · digit terbanyak ${arsip.digit.digit} (${pct2(arsip.digit.posterior)}, info saja)`,
+    );
+    text(
+      'arsipPenuhBacktest',
+      arsip.dievaluasi === 0
+        ? `Perlu lebih dari 50 ronde untuk walk-forward (sampel saat ini ${number(arsip.n)} ronde).`
+        : arsip.sinyal
+          ? `Walk-forward ${number(arsip.dievaluasi)} ronde dinilai · ${number(arsip.sinyal)} sinyal · ${number(arsip.menang)} menang · win rate ${pct2(arsip.winRate)} (CI95 ${pct2(arsip.ci95.lo)}–${pct2(arsip.ci95.hi)}) · EV ${arsip.ev >= 0 ? '+' : ''}${pct2(arsip.ev)} · baseline "selalu Besar" ${pct2(arsip.baseline.winRate)}`
+          : `Walk-forward ${number(arsip.dievaluasi)} ronde dinilai · 0 sinyal — metode LEWATI di seluruh ronde yang dinilai · baseline "selalu Besar" ${pct2(arsip.baseline.winRate)}`,
+    );
+    text(
+      'arsipPenuhNote',
+      arsip.dievaluasi === 0
+        ? 'Belum ada ronde yang dinilai.'
+        : arsip.sinyal === 0
+          ? 'Tidak ada sinyal pada sampel ini.'
+          : arsip.ci95.lo <= 0.5 && 0.5 <= arsip.ci95.hi
+            ? `Selang kepercayaan 95% memuat 50% — tidak ada bukti edge; EV ${arsip.ev >= 0 ? 'positif' : 'negatif'} ${pct2(Math.abs(arsip.ev))}.`
+            : 'Selang kepercayaan 95% tidak memuat 50% pada sampel ini — tetap hanya gambaran sampel, bukan sinyal ronde berikutnya.',
+    );
+  } else {
+    text('arsipPenuhVerdict', 'Belum ada sampel');
+    text('arsipPenuhBacktest', 'Belum ada sampel');
+    text('arsipPenuhNote', 'Belum ada sampel');
   }
 }
 

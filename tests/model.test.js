@@ -58,7 +58,7 @@ test('settles each prediction once and ignores older snapshots', () => {
   assert.equal(state.rounds, 1);
   assert.equal(state.rows.length, 2);
 });
-test('scores all four methods independently on every round', () => {
+test('scores all five methods independently on every round', () => {
   const state = newSession();
   const past = Array.from({ length: 40 }, (_, i) => ({ p: id(i + 1), h: 8 }));
   advanceSession(state, snapshot(id(41)), () => 0.9, past);
@@ -67,17 +67,46 @@ test('scores all four methods independently on every round', () => {
     'mayoritas-30': 'Besar',
     'mayoritas-all': 'Besar',
     acak: 'Besar',
+    // Posterior seluruh arsip: (40 + 0,5) / 41 ≈ 0,9878 > 0,5102.
+    'arsip-penuh': 'Besar',
   });
   advanceSession(state, snapshot(id(42), [result(id(41), 3)]), () => 0.9, past);
   assert.equal(state.rounds, 1);
   assert.equal(state.win, 0);
-  assert.equal(state.lose, 4);
-  for (const method of ['pola-6', 'mayoritas-30', 'mayoritas-all', 'acak']) {
+  assert.equal(state.lose, 5);
+  for (const method of ['pola-6', 'mayoritas-30', 'mayoritas-all', 'acak', 'arsip-penuh']) {
     assert.equal(state.methods[method].lose, 1);
   }
   const restored = restoreSession(JSON.parse(JSON.stringify(state)));
   assert.equal(restored.rounds, 1);
-  assert.equal(restored.lose, 4);
+  assert.equal(restored.lose, 5);
+});
+test('restores v4 sessions stored before arsip-penuh without losing history', () => {
+  const state = newSession();
+  const past = Array.from({ length: 40 }, (_, i) => ({ p: id(i + 1), h: 8 }));
+  advanceSession(state, snapshot(id(41)), () => 0.9, past);
+  // Sesi lama: tidak ada kunci 'arsip-penuh' di methods maupun picks.
+  const legacy = JSON.parse(JSON.stringify(state));
+  delete legacy.methods['arsip-penuh'];
+  for (const row of legacy.rows) delete row.picks['arsip-penuh'];
+  const restored = restoreSession(legacy);
+  assert.equal(restored.rows.length, 1);
+  assert.equal(restored.rows[0].picks['arsip-penuh'], null);
+  assert.deepEqual(restored.methods['arsip-penuh'], { win: 0, lose: 0 });
+  assert.equal(restored.methods['pola-6'].win + restored.methods['pola-6'].lose, 0);
+  assert.equal(restored.win, 0);
+  assert.equal(restored.lose, 0);
+  // Setelah migrasi, metode baru dinilai normal pada ronde berikutnya.
+  // Baris lama yang dimigrasikan tidak punya prediksi arsip-penuh (metode
+  // belum ada saat baris itu dibuat) → tidak dinilai untuk metode ini.
+  advanceSession(restored, snapshot(id(42), [result(id(41), 8)]), () => 0.9, past);
+  assert.equal(restored.methods['arsip-penuh'].win, 0);
+  assert.equal(restored.methods['arsip-penuh'].lose, 0);
+  // Baris baru id(42) dibuat setelah migrasi dengan prediksi lengkap.
+  assert.equal(restored.rows[0].picks['arsip-penuh'], 'Besar');
+  advanceSession(restored, snapshot(id(43), [result(id(42), 8)]), () => 0.9, past);
+  assert.equal(restored.methods['arsip-penuh'].win, 1);
+  assert.equal(restoreSession(JSON.parse(JSON.stringify(restored))).methods['arsip-penuh'].win, 1);
 });
 test('abstaining methods are not counted as wins or losses', () => {
   const state = newSession();
@@ -206,6 +235,33 @@ test('statistics melampirkan hasil uji sebaran angka', () => {
   assert.ok(stats.uniformity);
   assert.equal(stats.uniformity.n, 20);
   assert.equal(stats.uniformity.chi2, 0);
+});
+
+test('statistics melampirkan backtest arsip-penuh dan verdict sampel', () => {
+  const values = [...Array(50).fill(8), 8, 1, 8, 1, 8];
+  const history = values.map((h, i) => ({ p: id(i + 1), h }));
+  const stats = statistics(history);
+  const arsip = stats.arsipPenuh;
+  assert.equal(arsip.n, 55);
+  assert.equal(arsip.dievaluasi, 5);
+  assert.equal(arsip.sinyal, 5);
+  assert.equal(arsip.menang, 3);
+  assert.equal(arsip.kalah, 2);
+  assert.equal(arsip.winRate, 0.6);
+  assert.ok(Math.abs(arsip.ev - 0.176) < 1e-12);
+  assert.deepEqual(arsip.baseline, { menang: 3, winRate: 0.6 });
+  // Selang Wilson 95% untuk 3 dari 5 ≈ 23,07%–88,24%.
+  assert.ok(Math.abs(arsip.ci95.lo - 0.23072) < 0.001);
+  assert.ok(Math.abs(arsip.ci95.hi - 0.88238) < 0.001);
+  assert.equal(arsip.verdict, 'Besar');
+  assert.ok(Math.abs(arsip.pBesar - 53.5 / 56) < 1e-12);
+  assert.deepEqual(arsip.digit, { digit: 8, posterior: 53.5 / 60 });
+  // Sampel kosong: tidak ada verdict, tidak ada sinyal, tanpa crash.
+  const empty = statistics([]).arsipPenuh;
+  assert.equal(empty.n, 0);
+  assert.equal(empty.sinyal, 0);
+  assert.equal(empty.verdict, null);
+  assert.equal(empty.ci95, null);
 });
 
 test('transitions hanya menghitung pasangan periode berurutan', () => {

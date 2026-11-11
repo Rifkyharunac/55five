@@ -41,7 +41,7 @@ export function renderExperiments(history) {
     'backtestHint',
     history.length <= 100
       ? 'Perlu lebih dari 100 hasil untuk melewati warmup.'
-      : 'Bandingkan prediksi utama dan 4 metode pada maksimal 2.000 hasil terbaru.',
+      : 'Bandingkan prediksi utama dan 5 metode pada maksimal 2.000 hasil terbaru.',
   );
 }
 
