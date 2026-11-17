@@ -454,6 +454,71 @@ export function streakLengths(history) {
   return { runs, longest, buckets };
 }
 
+// Nomor periode: YYYYMMDD + "1000" + 5 digit urutan harian 50001–52880
+// (2880 ronde per hari, 120 ronde per jam). Urutan harian dimulai pukul
+// 00:00 UTC (= 08:00 WITA) — diverifikasi terhadap serverTime /api/ live
+// 17 Nov 2026: issue 50161 pada 01:20 UTC = ronde ke-161 hari itu.
+export const ROUNDS_PER_HOUR = 120;
+export const HOURS_PER_DAY = 24;
+
+// Nilai kritis chi-square df=23 pada alpha=0,05 (tabel baku statistik).
+export const CHI_SQUARE_DF23_CRITICAL_95 = 35.172;
+
+// Jam (WITA) suatu ronde dari nomor periodenya, atau null bila nomor
+// periode tidak mengikuti pola urutan harian 50001–52880.
+export function hourOfPeriod(period) {
+  if (typeof period !== 'string' || period.length < 5) return null;
+  const counter = Number(period.slice(-5));
+  if (!Number.isInteger(counter) || counter < 50001 || counter > 52880) return null;
+  const utcHour = Math.floor((counter - 50001) / ROUNDS_PER_HOUR);
+  return (utcHour + 8) % HOURS_PER_DAY;
+}
+
+// Porsi Besar per jam (WITA) beserta uji homogenitas chi-square antar
+// 24 jam: apakah porsi Besar berbeda nyata menurut jam? Murni deskriptif:
+// menguji keyakinan "jam hoki" pada sampel yang ada, bukan memprediksi
+// ronde berikutnya. Jam yang tidak punya ronde dilewati pada uji.
+export function hourlyBigShare(history) {
+  const rows = mergeHistory(history, [], Infinity);
+  const hours = Array.from({ length: HOURS_PER_DAY }, (_, jam) => ({
+    jam,
+    n: 0,
+    big: 0,
+    share: null,
+  }));
+  let total = 0;
+  let big = 0;
+  for (const row of rows) {
+    const jam = hourOfPeriod(row.p);
+    if (jam === null) continue;
+    hours[jam].n++;
+    total++;
+    if (category(row.h) === 'Besar') {
+      hours[jam].big++;
+      big++;
+    }
+  }
+  if (!total) return null;
+  for (const hour of hours) hour.share = wilsonInterval(hour.big, hour.n);
+  let chi2 = 0;
+  for (const hour of hours) {
+    if (!hour.n) continue;
+    const expectedBig = (big * hour.n) / total;
+    const expectedSmall = ((total - big) * hour.n) / total;
+    if (expectedBig > 0) chi2 += (hour.big - expectedBig) ** 2 / expectedBig;
+    if (expectedSmall > 0) chi2 += (hour.n - hour.big - expectedSmall) ** 2 / expectedSmall;
+  }
+  return {
+    total,
+    big,
+    hours,
+    chi2,
+    df: 23,
+    critical: CHI_SQUARE_DF23_CRITICAL_95,
+    homogeneous: chi2 <= CHI_SQUARE_DF23_CRITICAL_95,
+  };
+}
+
 export function historyCsv(history) {
   const rows = [
     ['Periode', 'Angka', 'Kategori', 'Warna'],

@@ -1,5 +1,10 @@
 # Changelog
 
+## 17 November 2026 — Besar menurut jam
+
+- Kartu baru **Besar menurut jam** di tab Statistik: porsi Besar per jam (WITA) dengan selang kepercayaan 95% (Wilson) tiap jam + uji homogenitas chi-square antar 24 jam, dihitung dari seluruh arsip yang dimuat (bukan pilihan sampel).
+- Verifikasi arsip live 17 November 2026 (87.835 ronde): porsi Besar per jam 48,35% (13:00) sampai 51,37% (23:00); seluruh selang 95% memuat 50%; χ²=31,58 (df=23, batas kritis 35,17) — porsi Besar tidak berbeda nyata antar jam. Jam tidak berpengaruh; bukan sinyal.
+
 ## 11 November 2026 — Metode arsip-penuh
 
 - Metode kelima **arsip-penuh** di simulator dan backtest: posterior Laplace dari seluruh arsip yang dimuat, sinyal hanya bila satu sisi melewati ambang impas payout 1,96 (p &gt; 0,5102), selebihnya LEWATI. Tidak ikut memilih prediksi utama.

@@ -1,5 +1,5 @@
 import { category, colors, issueDayLabel } from './data.js';
-import { INITIAL_BALANCE, STAKE, statistics } from './model.js';
+import { INITIAL_BALANCE, STAKE, hourlyBigShare, statistics } from './model.js';
 
 export const $ = (id) => document.getElementById(id);
 export function text(id, value) {
@@ -154,7 +154,7 @@ export function renderRecent(history) {
   );
 }
 
-export function renderStats(history) {
+export function renderStats(history, fullHistory = history) {
   const stats = statistics(history);
   text(
     'statsMeta',
@@ -293,6 +293,33 @@ export function renderStats(history) {
     text('arsipPenuhVerdict', 'Belum ada sampel');
     text('arsipPenuhBacktest', 'Belum ada sampel');
     text('arsipPenuhNote', 'Belum ada sampel');
+  }
+  const hourly = hourlyBigShare(fullHistory);
+  const hourlyBody = $('hourlyBody');
+  if (hourly) {
+    const fragment = document.createDocumentFragment();
+    for (const hour of hourly.hours) {
+      const tr = element('tr');
+      cell(tr, `${String(hour.jam).padStart(2, '0')}:00`);
+      cell(tr, hour.n ? number(hour.n) : '—');
+      cell(tr, hour.n ? number(hour.big) : '—');
+      cell(tr, hour.n ? `${((100 * hour.big) / hour.n).toFixed(1).replace('.', ',')}%` : '—');
+      cell(tr, hour.share ? `${pct(hour.share.lo)}%–${pct(hour.share.hi)}%` : '—');
+      fragment.append(tr);
+    }
+    hourlyBody.replaceChildren(fragment);
+    const shares = hourly.hours.filter((hour) => hour.n).map((hour) => hour.big / hour.n);
+    text(
+      'hourlyNote',
+      `${number(hourly.total)} ronde · porsi Besar per jam ${pct(Math.min(...shares))}%–${pct(Math.max(...shares))}% · uji homogenitas antar jam: χ²=${hourly.chi2.toFixed(2).replace('.', ',')} (df=23, batas kritis 35,17) → ${
+        hourly.homogeneous
+          ? 'porsi Besar tidak berbeda nyata antar jam'
+          : 'porsi Besar menyimpang antar jam'
+      }`,
+    );
+  } else {
+    hourlyBody.replaceChildren();
+    text('hourlyNote', 'Belum ada sampel');
   }
 }
 

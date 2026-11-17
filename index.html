@@ -414,13 +414,46 @@
                     <p id="arsipPenuhNote" class="chart-note">Belum ada sampel</p>
                   </div>
                   <p class="chart-note">
-                    Metode arsip-penuh memakai seluruh arsip yang dimuat: posterior Laplace
-                    P(Besar) = (jumlah Besar + 0,5) / (N + 1). Sinyal hanya muncul bila satu
-                    sisi melewati ambang impas payout 1,96 (p &gt; 0,5102); selebihnya LEWATI.
-                    Backtest walk-forward menghitung sinyal hanya dari ronde-ronde sebelumnya,
-                    bukan dari ronde yang dinilai. Digit terbanyak hanya info deskriptif, bukan
-                    sinyal taruhan. Angka ini menggambarkan sampel yang sudah terjadi — arsip
-                    tidak menunjukkan edge, dan ronde berikutnya tetap acak dan independen.
+                    Metode arsip-penuh memakai seluruh arsip yang dimuat: posterior Laplace P(Besar)
+                    = (jumlah Besar + 0,5) / (N + 1). Sinyal hanya muncul bila satu sisi melewati
+                    ambang impas payout 1,96 (p &gt; 0,5102); selebihnya LEWATI. Backtest
+                    walk-forward menghitung sinyal hanya dari ronde-ronde sebelumnya, bukan dari
+                    ronde yang dinilai. Digit terbanyak hanya info deskriptif, bukan sinyal taruhan.
+                    Angka ini menggambarkan sampel yang sudah terjadi — arsip tidak menunjukkan
+                    edge, dan ronde berikutnya tetap acak dan independen.
+                  </p>
+                </section>
+                <section class="uniformity-section" aria-labelledby="hourlyTitle">
+                  <h3 id="hourlyTitle">Besar menurut jam</h3>
+                  <div
+                    class="table-scroll"
+                    tabindex="0"
+                    role="region"
+                    aria-label="Porsi besar per jam, dapat digulir"
+                  >
+                    <table>
+                      <caption>
+                        Porsi Besar per jam (WITA)
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Jam (WITA)</th>
+                          <th scope="col">Ronde</th>
+                          <th scope="col">Besar</th>
+                          <th scope="col">Besar %</th>
+                          <th scope="col">Selang 95%</th>
+                        </tr>
+                      </thead>
+                      <tbody id="hourlyBody"></tbody>
+                    </table>
+                  </div>
+                  <p class="chart-note" id="hourlyNote">Belum ada sampel</p>
+                  <p class="chart-note">
+                    Jam dihitung dari nomor periode: urutan harian dimulai 00:00 UTC (08:00 WITA),
+                    120 ronde per jam. Dihitung dari seluruh arsip yang dimuat, bukan dari pilihan
+                    sampel di atas. Jika jam tidak berpengaruh, porsi tiap jam mendekati 50% dan uji
+                    homogenitas tidak menolak kesamaan antar jam — itu pun hanya gambaran sampel,
+                    bukan sinyal ronde berikutnya.
                   </p>
                 </section>
                 <p class="analysis-note">

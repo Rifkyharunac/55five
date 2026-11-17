@@ -10,6 +10,8 @@ import {
   historyCsv,
   chiSquareUniform,
   wilsonInterval,
+  hourlyBigShare,
+  hourOfPeriod,
   transitions,
   streakLengths,
 } from '../src/model.js';
@@ -341,4 +343,49 @@ test('streakLengths menghitung distribusi panjang rangkaian vs harapan koin adil
   ]);
   assert.equal(stats.streakLengths.runs, 2);
   assert.equal(stats.streakLengths.longest, 3);
+});
+
+test('hourOfPeriod memetakan nomor periode ke jam WITA', () => {
+  // Urutan harian 50001 = 00:00 UTC = 08:00 WITA; 120 ronde per jam.
+  assert.equal(hourOfPeriod(id(1)), 8);
+  assert.equal(hourOfPeriod(id(120)), 8);
+  assert.equal(hourOfPeriod(id(121)), 9);
+  assert.equal(hourOfPeriod(id(2880)), 7);
+  assert.equal(hourOfPeriod('20261014100050000'), null);
+  assert.equal(hourOfPeriod('20261014100052881'), null);
+  assert.equal(hourOfPeriod('bukan-periode'), null);
+  assert.equal(hourOfPeriod(null), null);
+});
+
+test('hourlyBigShare menghitung porsi Besar per jam dan uji homogenitas', () => {
+  // Jam 08: 120 ronde Besar semua; jam 09: 120 ronde Kecil semua.
+  const history = [];
+  for (let i = 1; i <= 120; i++) history.push({ p: id(i), h: 8 });
+  for (let i = 121; i <= 240; i++) history.push({ p: id(i), h: 2 });
+  const hourly = hourlyBigShare(history);
+  assert.equal(hourly.total, 240);
+  assert.equal(hourly.big, 120);
+  assert.equal(hourly.hours[8].n, 120);
+  assert.equal(hourly.hours[8].big, 120);
+  assert.equal(hourly.hours[9].n, 120);
+  assert.equal(hourly.hours[9].big, 0);
+  assert.equal(hourly.hours[10].n, 0);
+  assert.equal(hourly.hours[10].share, null);
+  assert.ok(hourly.hours[8].share.lo > 0.9);
+  assert.equal(hourly.df, 23);
+  assert.equal(hourly.homogeneous, false);
+  // Selang tiap jam memuat porsi jam itu.
+  assert.ok(hourly.hours[9].share.hi < 0.1);
+  // Sampel seimbang sempurna di semua jam: homogen.
+  const balanced = [];
+  for (let i = 1; i <= 2880; i++) balanced.push({ p: id(i), h: i % 2 ? 8 : 2 });
+  const even = hourlyBigShare(balanced);
+  assert.equal(even.total, 2880);
+  assert.equal(even.big, 1440);
+  assert.equal(even.chi2, 0);
+  assert.equal(even.homogeneous, true);
+  // Periode tak valid dilewati; riwayat kosong/tak valid mengembalikan null.
+  assert.equal(hourlyBigShare([]), null);
+  assert.equal(hourlyBigShare([{ p: 'bukan-periode', h: 8 }]), null);
+  assert.equal(hourlyBigShare([{ p: id(1), h: 8 }]).total, 1);
 });

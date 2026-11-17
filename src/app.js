@@ -42,7 +42,7 @@ function drawHistory() {
 }
 function drawStats() {
   const count = Number($('statsLimit').value);
-  renderStats(count ? allHistory().slice(0, count) : allHistory());
+  renderStats(count ? allHistory().slice(0, count) : allHistory(), allHistory());
 }
 function allHistory() {
   return mergeHistory(seedHistory, history, Infinity);
