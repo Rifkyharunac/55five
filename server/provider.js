@@ -63,10 +63,39 @@ function wallTime(value) {
     : NaN;
 }
 
-export function createProvider({ fetchImpl = fetch, env = process.env, timeoutMs = 8000 } = {}) {
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function createProvider({
+  fetchImpl = fetch,
+  env = process.env,
+  timeoutMs = 8000,
+  retryDelayMs = 250,
+  retryTimeoutMs = 3000,
+  maxAttempts = 2,
+} = {}) {
+  // Satu percobaan ulang untuk kegagalan sesaat penyedia (mis. 502/putus koneksi):
+  // sebagian besar gagal cepat (<1 dtk), jadi percobaan ulang menutup hampir semua
+  // gangguan sesaat tanpa melewati batas 12 dtk timeout klien (8 + 0,25 + 3 = 11,25 dtk).
   async function request(path, body) {
+    let lastError;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) await sleep(retryDelayMs);
+      try {
+        return await attemptRequest(
+          path,
+          body,
+          attempt === 0 ? timeoutMs : Math.min(timeoutMs, retryTimeoutMs),
+        );
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError;
+  }
+
+  async function attemptRequest(path, body, timeout) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeout);
     try {
       const response = await fetchImpl(BASE_URL + path, {
         method: 'POST',

@@ -81,6 +81,26 @@ test('timeout aborts the upstream request', async () => {
     });
   await assert.rejects(provider(fetchImpl).history(), { code: 'UPSTREAM_TIMEOUT' });
 });
+test('transient upstream failure is retried once instead of failing the poll', async () => {
+  let calls = 0;
+  const service = provider(async (url) => {
+    calls++;
+    if (calls <= 2) return new Response('down', { status: 503 });
+    return success(url);
+  });
+  const snapshot = await service.snapshot();
+  assert.equal(snapshot.issue, issue);
+  assert.equal(calls, 4);
+});
+test('persistent upstream failure still fails after one retry', async () => {
+  let calls = 0;
+  const service = provider(async () => {
+    calls++;
+    return new Response('down', { status: 503 });
+  });
+  await assert.rejects(service.history(), { code: 'UPSTREAM_UNAVAILABLE' });
+  assert.equal(calls, 2);
+});
 test('handler rejects writes and returns sanitized errors', async () => {
   let called = false;
   const handler = createHandler(async () => {

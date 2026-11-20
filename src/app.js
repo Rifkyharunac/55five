@@ -28,7 +28,8 @@ const settings = storage.loadSettings();
 let latest = null,
   paused = false,
   connectionState = 'loading',
-  toastTimer;
+  toastTimer,
+  errorStreak = 0;
 
 function filteredHistory() {
   return filterHistory(allHistory(), {
@@ -140,6 +141,7 @@ const poller = createPoller({
       return;
     }
     if (state === 'error') {
+      errorStreak++;
       text(
         'periodCaption',
         latest ? 'Data terakhir · menunggu koneksi pulih' : 'Belum ada data terkonfirmasi',
@@ -152,8 +154,14 @@ const poller = createPoller({
             : error instanceof TypeError
               ? 'Layanan belum terjangkau. Mencoba kembali otomatis.'
               : error?.message;
+      // Satu kegagalan sesaat jangan langsung menampilkan "Koneksi terganggu":
+      // pill baru berubah setelah 2 kegagalan beruntun.
+      if (errorStreak < 2) return;
       status('error', message || 'Gagal memuat data. Mencoba kembali otomatis.');
-    } else status('live');
+    } else {
+      errorStreak = 0;
+      status('live');
+    }
   },
 });
 

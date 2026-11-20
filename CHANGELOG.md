@@ -1,5 +1,11 @@
 # Changelog
 
+## 20 November 2026 — Koneksi lebih tahan gangguan sesaat
+
+- Permintaan ke penyedia data kini dicoba ulang sekali bila gagal sesaat (mis. 502/putus koneksi): sebagian besar kegagalan seperti itu selesai dalam <1 detik, jadi percobaan ulang menutup hampir semua gangguan sesaat. Batas total tetap di bawah 12 detik timeout klien (8 + 0,25 + 3 detik), di bawah batas 15 detik fungsi server.
+- Status "Koneksi terganggu" baru tampil setelah 2 kegagalan beruntun, bukan pada kegagalan pertama: satu poll yang gagal sesaat tidak lagi membuat pill berkedip. Saat gangguan penyedia benar-benar berlangsung, status tetap berubah ke "Koneksi terganggu" seperti sebelumnya dan pemulihan otomatis tetap jalan.
+- Diagnosis 20 November 2026: dari 40 probe ke `/api/` live, 1 gagal cepat dengan 502 (~0,8 dtk) sementara 39 berhasil (~0,65 dtk); probe langsung ke penyedia 10/10 berhasil. Penyedia tidak mati — gangguannya sesaat dan acak, tapi browser melakukan poll tiap ~2 detik sehingga satu kegagalan langsung terlihat sebagai "Koneksi terganggu".
+
 ## 17 November 2026 — Besar menurut jam
 
 - Kartu baru **Besar menurut jam** di tab Statistik: porsi Besar per jam (WITA) dengan selang kepercayaan 95% (Wilson) tiap jam + uji homogenitas chi-square antar 24 jam, dihitung dari seluruh arsip yang dimuat (bukan pilihan sampel).
