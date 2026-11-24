@@ -14,6 +14,8 @@ import {
   hourOfPeriod,
   transitions,
   streakLengths,
+  runsTest,
+  normalCdf,
 } from '../src/model.js';
 
 const id = (n) => `2026101410005${String(n).padStart(4, '0')}`;
@@ -343,6 +345,79 @@ test('streakLengths menghitung distribusi panjang rangkaian vs harapan koin adil
   ]);
   assert.equal(stats.streakLengths.runs, 2);
   assert.equal(stats.streakLengths.longest, 3);
+});
+
+test('runsTest menguji keacakan urutan Besar/Kecil (Wald–Wolfowitz)', () => {
+  // B,K,B,K,B,K: 6 rangkaian; harapan 4; varians 1,2; z = 2/√1,2 ≈ 1,8257; p ≈ 0,0679.
+  const alternating = runsTest([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 3 },
+    { p: id(3), h: 9 },
+    { p: id(4), h: 2 },
+    { p: id(5), h: 7 },
+    { p: id(6), h: 4 },
+  ]);
+  assert.equal(alternating.n, 6);
+  assert.equal(alternating.big, 3);
+  assert.equal(alternating.small, 3);
+  assert.equal(alternating.segments, 1);
+  assert.equal(alternating.runs, 6);
+  assert.equal(alternating.expected, 4);
+  assert.ok(Math.abs(alternating.variance - 1.2) < 1e-12);
+  assert.ok(Math.abs(alternating.z - 1.8257) < 0.0001);
+  assert.ok(Math.abs(alternating.p - 0.0679) < 0.0001);
+  assert.equal(alternating.random, true);
+  // B,B,B,K,K,K: 2 rangkaian; z berlawanan tanda, p sama.
+  const clustered = runsTest([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 9 },
+    { p: id(3), h: 7 },
+    { p: id(4), h: 2 },
+    { p: id(5), h: 4 },
+    { p: id(6), h: 0 },
+  ]);
+  assert.equal(clustered.runs, 2);
+  assert.ok(Math.abs(clustered.z + 1.8257) < 0.0001);
+  assert.ok(Math.abs(clustered.p - alternating.p) < 1e-9);
+  assert.equal(clustered.random, true);
+  // Satu kategori: z dan p null, uji tidak dapat dihitung.
+  const single = runsTest([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 9 },
+  ]);
+  assert.equal(single.runs, 1);
+  assert.equal(single.expected, 1);
+  assert.equal(single.variance, 0);
+  assert.equal(single.z, null);
+  assert.equal(single.p, null);
+  assert.equal(single.random, null);
+  // Jeda (id 3 dilewati) memutus segmen: dua segmen B,K — harapan dan
+  // varians dijumlahkan per segmen.
+  const gapped = runsTest([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 3 },
+    { p: id(4), h: 9 },
+    { p: id(5), h: 2 },
+  ]);
+  assert.equal(gapped.segments, 2);
+  assert.equal(gapped.runs, 4);
+  assert.equal(gapped.expected, 4);
+  assert.equal(gapped.variance, 0);
+  assert.equal(gapped.z, null);
+  // normalCdf: nilai baku.
+  assert.ok(Math.abs(normalCdf(0) - 0.5) < 1e-9);
+  assert.ok(Math.abs(normalCdf(1.96) - 0.975) < 0.001);
+  assert.ok(Math.abs(normalCdf(-1.96) - 0.025) < 0.001);
+  assert.equal(runsTest([]), null);
+  // statistics melampirkan uji runs pada sampel yang sama.
+  const stats = statistics([
+    { p: id(1), h: 8 },
+    { p: id(2), h: 9 },
+    { p: id(3), h: 7 },
+    { p: id(4), h: 2 },
+  ]);
+  assert.equal(stats.runsTest.runs, 2);
+  assert.equal(stats.runsTest.segments, 1);
 });
 
 test('hourOfPeriod memetakan nomor periode ke jam WITA', () => {

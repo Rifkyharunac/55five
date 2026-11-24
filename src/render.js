@@ -264,6 +264,22 @@ export function renderStats(history, fullHistory = history) {
     lengthBody.replaceChildren();
     text('streakLengthNote', 'Belum ada sampel');
   }
+  const runsTestResult = stats.runsTest;
+  const pText = (value) => (value < 0.001 ? '< 0,001' : value.toFixed(3).replace('.', ','));
+  text(
+    'runsValue',
+    runsTestResult && runsTestResult.z !== null
+      ? `z = ${runsTestResult.z.toFixed(2).replace('.', ',')}`
+      : '—',
+  );
+  text(
+    'runsNote',
+    runsTestResult
+      ? runsTestResult.z === null
+        ? `${number(runsTestResult.n)} ronde dalam sampel — hanya satu kategori, uji tidak dapat dihitung.`
+        : `${number(runsTestResult.n)} ronde · ${number(runsTestResult.big)} Besar · ${number(runsTestResult.small)} Kecil · ${number(runsTestResult.runs)} rangkaian (harapan ${runsTestResult.expected.toFixed(1).replace('.', ',')}) · p = ${pText(runsTestResult.p)} → urutan ${runsTestResult.random ? 'tidak berbeda nyata dari acak' : 'berbeda nyata dari acak'}`
+      : 'Belum ada sampel',
+  );
   const arsip = stats.arsipPenuh;
   const pct2 = (value) => `${(100 * value).toFixed(2).replace('.', ',')}%`;
   if (arsip && arsip.n > 0) {

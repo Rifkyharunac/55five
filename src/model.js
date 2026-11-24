@@ -302,6 +302,7 @@ export function statistics(history) {
   stats.uniformity = chiSquareUniform(stats.frequency);
   stats.transitions = transitions(rows);
   stats.streakLengths = streakLengths(rows);
+  stats.runsTest = runsTest(rows);
   stats.arsipPenuh = arsipPenuh(rows);
   return stats;
 }
@@ -452,6 +453,90 @@ export function streakLengths(history) {
     bucket.expected = runs * 2 ** -(bucket.length === 9 ? 8 : bucket.length);
   }
   return { runs, longest, buckets };
+}
+
+// Fungsi distribusi kumulatif normal baku Φ(x) (aproksimasi
+// Abramowitz–Stegun 7.1.26, galat < 1,5e-7) — dipakai untuk nilai-p uji runs.
+export function normalCdf(x) {
+  if (!Number.isFinite(x)) return NaN;
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const density = Math.exp(-(x * x) / 2) / Math.sqrt(2 * Math.PI);
+  const poly =
+    t *
+    (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const prob = density * poly;
+  return x >= 0 ? 1 - prob : prob;
+}
+
+// Uji keacakan urutan Wald–Wolfowitz (runs test) pada rangkaian Besar/Kecil:
+// apakah urutan hasil terlihat acak, atau terlalu sering berganti (rangkaian
+// terlalu banyak) / terlalu menggumpal (rangkaian terlalu sedikit)?
+// Rangkaian hanya berlanjut pada periode yang benar-benar berurutan — jeda
+// arsip memutus rangkaian, seperti pada transisi dan streakLengths. Tiap
+// segmen berurutan dihitung terpisah, lalu harapan dan variansnya
+// dijumlahkan. Nilai-p memakai aproksimasi normal (normalCdf). Murni
+// deskriptif: menguji keacakan urutan pada sampel yang ada, bukan
+// memprediksi ronde berikutnya.
+export function runsTest(history) {
+  const rows = mergeHistory(history, [], Infinity).reverse();
+  let runs = 0;
+  let big = 0;
+  let small = 0;
+  let expected = 0;
+  let variance = 0;
+  let segments = 0;
+  let segBig = 0;
+  let segSmall = 0;
+  let segRuns = 0;
+  let previous = null;
+  const closeSegment = () => {
+    if (segBig + segSmall === 0) return;
+    segments++;
+    big += segBig;
+    small += segSmall;
+    runs += segRuns;
+    if (segBig > 0 && segSmall > 0) {
+      const n = segBig + segSmall;
+      expected += (2 * segBig * segSmall) / n + 1;
+      variance += (2 * segBig * segSmall * (2 * segBig * segSmall - n)) / (n * n * (n - 1));
+    } else {
+      // Segmen satu kategori: tepat 1 rangkaian, tanpa varians.
+      expected += 1;
+    }
+    segBig = 0;
+    segSmall = 0;
+    segRuns = 0;
+  };
+  for (const row of rows) {
+    const name = category(row.h);
+    const continues =
+      previous &&
+      previous.p.length === row.p.length &&
+      previous.p.slice(0, -5) === row.p.slice(0, -5) &&
+      Number(row.p.slice(-5)) - Number(previous.p.slice(-5)) === 1;
+    if (!continues) closeSegment();
+    if (name === 'Besar') segBig++;
+    else segSmall++;
+    if (!continues || category(previous.h) !== name) segRuns++;
+    previous = row;
+  }
+  closeSegment();
+  if (!segments) return null;
+  const n = big + small;
+  const z = variance > 0 ? (runs - expected) / Math.sqrt(variance) : null;
+  const p = z === null ? null : 2 * (1 - normalCdf(Math.abs(z)));
+  return {
+    n,
+    big,
+    small,
+    segments,
+    runs,
+    expected,
+    variance,
+    z,
+    p,
+    random: p === null ? null : p >= 0.05,
+  };
 }
 
 // Nomor periode: YYYYMMDD + "1000" + 5 digit urutan harian 50001–52880

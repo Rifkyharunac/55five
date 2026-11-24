@@ -1,5 +1,10 @@
 # Changelog
 
+## 24 November 2026 — Uji keacakan urutan
+
+- Kartu baru **Uji keacakan urutan** di tab Statistik: uji Wald–Wolfowitz (runs test) pada urutan Besar/Kecil — menghitung jumlah rangkaian dan membandingkannya dengan harapan pada urutan acak (z dan nilai-p dua sisi), melengkapi kartu transisi dan distribusi panjang rangkaian. Jeda arsip memutus rangkaian; tiap segmen berurutan dihitung terpisah lalu harapan dan variansnya dijumlahkan.
+- Verifikasi arsip live 24 November 2026 (107.936 ronde): 54.622 rangkaian vs harapan 54.390,3; z=1,43, p=0,154 — urutan tidak berbeda nyata dari acak. Bukan sinyal.
+
 ## 20 November 2026 — Koneksi lebih tahan gangguan sesaat
 
 - Permintaan ke penyedia data kini dicoba ulang sekali bila gagal sesaat (mis. 502/putus koneksi): sebagian besar kegagalan seperti itu selesai dalam <1 detik, jadi percobaan ulang menutup hampir semua gangguan sesaat. Batas total tetap di bawah 12 detik timeout klien (8 + 0,25 + 3 detik), di bawah batas 15 detik fungsi server.
